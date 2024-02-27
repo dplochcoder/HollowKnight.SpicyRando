@@ -1,0 +1,6 @@
+ItemChanger
+PurenailCore
+RandoSettingsManager
+Randomizer 4
+MenuChanger
+RandomizerCore.Json
