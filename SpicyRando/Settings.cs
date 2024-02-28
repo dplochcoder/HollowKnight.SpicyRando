@@ -17,6 +17,7 @@ public class RandomizationSettings
 
 public class FeatureSettings
 {
+    public bool GitGud = false;
     public bool SpicyBretta = false;
     public bool SuperMyla = false;
 

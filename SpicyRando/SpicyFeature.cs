@@ -16,6 +16,7 @@ internal static class SpicyFeatures
 {
     internal static List<SpicyFeature> All() => new()
     {
+        new GitGudFeature(),
         new SpicyBrettaFeature(),
         new SuperMylaFeature(),
     };
