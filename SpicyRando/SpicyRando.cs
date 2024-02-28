@@ -38,16 +38,11 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
         bool rando = ModHooks.GetMod("Randomizer 4") is Mod && IsRandoSave();
         if (!rando)
         {
-            var ic = false;
             foreach (var feature in SpicyFeatures.All())
             {
                 if (feature.Get(GS.vanillaFeatures))
                 {
-                    if (!ic)
-                    {
-                        ItemChangerMod.CreateSettingsProfile();
-                        ic = true;
-                    }
+                    ItemChangerMod.CreateSettingsProfile(false);
                     feature.Install();
                 }
             }
