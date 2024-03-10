@@ -20,6 +20,7 @@ internal static class SpicyFeatures
     {
         new GitGudFeature(),
         new SpicyBrettaFeature(),
+        new HoarderFeature(),
         new SuperMylaFeature(),
     };
 
