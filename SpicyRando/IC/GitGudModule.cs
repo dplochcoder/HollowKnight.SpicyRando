@@ -157,6 +157,7 @@ internal class GitGudFeature : SpicyFeature
 {
     public string Name => "Git Gud";
     public string Description => "Makes obtaining Mothwing Cloak slightly more difficult";
+    public bool Experimental() => true;
     public bool Get(FeatureSettings settings) => settings.GitGud;
     public void Set(FeatureSettings settings, bool value) => settings.GitGud = value;
     public void Install() => ItemChangerMod.Modules.Add<GitGudModule>();

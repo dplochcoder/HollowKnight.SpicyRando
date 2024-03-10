@@ -333,6 +333,7 @@ internal class SpicyBrettaFeature : SpicyFeature
 {
     public string Name => "Spicy Bretta";
     public string Description => "Makes rescuing Bretta slightly more difficult with claw";
+    public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.SpicyBretta;
     public void Set(FeatureSettings settings, bool value) => settings.SpicyBretta = value;
     public void Install() => ItemChangerMod.Modules.Add<SpicyBrettaModule>();

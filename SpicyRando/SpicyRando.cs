@@ -19,6 +19,15 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 
     private static readonly string Version = VersionUtil.ComputeVersion<SpicyRando>();
 
+    public static bool Debug()
+    {
+#if DEBUG
+        return true;
+#else
+        return false;
+#endif
+    }
+
     public override string GetVersion() => Version;
 
     public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)

@@ -172,6 +172,7 @@ internal class SuperMylaFeature : SpicyFeature
 {
     public string Name => "Super Myla";
     public string Description => "Makes Myla slightly more difficult to kill";
+    public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.SuperMyla;
     public void Set(FeatureSettings settings, bool value) => settings.SuperMyla = value;
     public void Install() => ItemChangerMod.Modules.Add<SuperMylaModule>();
