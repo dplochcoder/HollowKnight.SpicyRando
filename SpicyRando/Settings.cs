@@ -19,6 +19,7 @@ public class FeatureSettings
 {
     public bool GitGud = false;
     public bool SpicyBretta = false;
+    public bool Hoarder = false;
     public bool SuperMyla = false;
 
     [JsonIgnore]
