@@ -4,4 +4,3 @@ PurenailCore
 RandomizerCore.Json
 Randomizer 4
 RandoSettingsManager
-Enemy Randomizer
