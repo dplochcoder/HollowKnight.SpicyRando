@@ -30,6 +30,8 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 
     public override string GetVersion() => Version;
 
+    internal static void Warn(string msg) => Instance?.LogWarn(msg);
+
     public override void Initialize(Dictionary<string, Dictionary<string, GameObject>> preloadedObjects)
     {
         Preloader.Instance.Initialize(preloadedObjects);
