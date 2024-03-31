@@ -3,6 +3,7 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
+using Modding;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
@@ -27,7 +28,7 @@ internal class CorpseFader : MonoBehaviour
         yield return null;
         yield return new WaitForSeconds(lingerTime);
 
-        var spriteRenderers = gameObject.GetComponentsInChildren<SpriteRenderer>().ToList();
+        var spriteRenderers = gameObject.GetComponentsInChildren<SpriteRenderer>(true).ToList();
 
         float prog = 0;
         while (prog < fadeTime)
@@ -65,6 +66,19 @@ internal abstract class CorpseAdjuster : MonoBehaviour
     }
 }
 
+internal class BlobbleCorpseAdjuster : MonoBehaviour
+{
+    private void Update()
+    {
+        var child = gameObject.FindChild("Corpse Blobble(Clone)");
+        if (child != null)
+        {
+            child.AddComponent<CorpseFader>();
+            Destroy(this);
+        }
+    }
+}
+
 internal class InfectedCorpseAdjuster : CorpseAdjuster
 {
     protected override void AdjustCorpse(PlayMakerFSM fsm)
@@ -76,13 +90,13 @@ internal class InfectedCorpseAdjuster : CorpseAdjuster
 
         var init = fsm.GetState("Init");
         init.RemoveActionsOfType<SendEventByName>();
-        init.GetFirstActionOfType<Wait>().time = 0.25f;
+        init.GetFirstActionOfType<Wait>().time = 0.1f;
 
         var steam = fsm.GetState("Steam");
         steam.RemoveActionsOfType<SendEventByName>();
-        steam.GetFirstActionOfType<Wait>().time = 0.45f;
+        steam.GetFirstActionOfType<Wait>().time = 0.15f;
 
-        fsm.GetState("Ready").GetFirstActionOfType<Wait>().time = 0.1f;
+        fsm.GetState("Ready").GetFirstActionOfType<Wait>().time = 0.05f;
 
         fsm.GetState("Sting")?.RemoveActionsOfType<AudioPlayerOneShotSingle>();
 
@@ -100,12 +114,12 @@ internal class WatcherKnightCorpseAdjuster : CorpseAdjuster
         var roar = fsm.GetState("Roar");
         roar.RemoveActionsOfType<AudioPlayerOneShotSingle>();
         roar.RemoveActionsOfType<SendEventByName>();
-        roar.GetFirstActionOfType<Wait>().time = 0.15f;
+        roar.GetFirstActionOfType<Wait>().time = 0f;
         roar.AddLastAction(new Lambda(() => fsm.SetState("Shatter")));
 
         var shatter = fsm.GetState("Shatter");
         shatter.RemoveActionsOfType<SendEventByName>();
-        shatter.GetFirstActionOfType<Wait>().time = 0.35f;
+        shatter.GetFirstActionOfType<Wait>().time = 0.1f;
 
         fsm.GetState("Final").AddLastAction(new Lambda(() => fsm.gameObject.AddComponent<CorpseFader>()));
     }
@@ -131,6 +145,21 @@ internal class MarmuCorpseAdjuster : CorpseAdjuster
         end.GetFirstActionOfType<AudioPlaySimple>().volume = 0.4f;
         end.RemoveActionsOfType<CreateObject>();
         end.AddLastAction(new Lambda(() => fsm.gameObject.AddComponent<CorpseFader>()));
+    }
+}
+
+internal class AddDamageHero : MonoBehaviour
+{
+    private void Awake() => StartCoroutine(DelayedAddDamageHero());
+
+    private IEnumerator DelayedAddDamageHero()
+    {
+        yield return new WaitForSeconds(0.25f);
+
+        var damage = gameObject.AddComponent<DamageHero>();
+        damage.hazardType = 1;
+        damage.damageDealt = 1;
+        Destroy(this);
     }
 }
 
@@ -172,6 +201,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
         internal float yVelBump = 0;
         internal float rXVelBump = 0;
         internal Action<GameObject>? customHook;
+
+        internal int index;
         internal bool force = false;
 
         internal void Apply(FsmState state, HoarderModule mod)
@@ -192,20 +223,70 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 var r2d = obj.GetComponent<Rigidbody2D>();
                 r2d.velocity += new Vector2(rXVelBump * UnityEngine.Random.Range(-1f, 1f), yVelBump);
             }
+            obj.AddComponent<EnemyCleanup>().index = index;
+
+            // No geo farming.
+            var health = obj.GetComponent<HealthManager>();
+            health.SetGeoSmall(0);
+            health.SetGeoMedium(0);
+            health.SetGeoLarge(0);
 
             customHook?.Invoke(obj);
         }
     }
 
+    internal class EnemyCleanup : MonoBehaviour
+    {
+        internal int? index;
+        private bool updated = false;
+
+        private void Update()
+        {
+            if (!updated && index != null)
+            {
+                updated = true;
+                JarSpawnThreshold.OnCleanupIndex += Cleanup;
+            }
+        }
+
+        private void Cleanup(int cleanupIndex)
+        {
+            if (index <= cleanupIndex)
+            {
+                var health = gameObject.GetComponent<HealthManager>();
+                health.ApplyExtraDamage(999);
+            }
+        }
+
+        private void OnDestroy() => JarSpawnThreshold.OnCleanupIndex -= Cleanup;
+    }
+
     internal record JarSpawnThreshold
     {
+        internal static event Action<int>? OnCleanupIndex;
+        internal static void CleanupIndex(int index) => OnCleanupIndex?.Invoke(index);
+
+        internal (int, int) spawnCounts;
         internal int hpSize;
         internal JarSpawn spawn1;
         internal JarSpawn spawn2;
         internal JarSpawn spawn3;
+
+        // Derived fields
+        private int index;
         internal int hpThreshold;
 
-        internal JarSpawn? GetForced()
+        internal void SetIndex(int index)
+        {
+            this.index = index;
+            spawn1.index = index;
+            spawn2.index = index;
+            spawn3.index = index;
+        }
+
+        internal int GetIndex() => index;
+
+        private JarSpawn? GetForced()
         {
             if (spawn1.force) return spawn1;
             else if (spawn2.force) return spawn2;
@@ -228,11 +309,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
         {
             new()
             {
+                spawnCounts = (3, 3),
                 hpSize = 400,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Aspid,
                     hp = 15,
+                    yBump = 0.25f,
+                    yVelBump = 0.25f,
                 },
                 spawn2 = new()
                 {
@@ -243,11 +327,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 {
                     spawner = () => Preloader.Instance.Squit,
                     hp = 8,
+                    yBump = 0.25f,
+                    yVelBump = 0.25f,
                 }
             },
             new()
             {
-                hpSize = 550,
+                spawnCounts = (2, 3),
+                hpSize = 500,
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.ArmoredSquitCage.ExtractFromCage,
@@ -258,7 +345,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn2 = new()
                 {
                     spawner = Preloader.Instance.ArmoredBaldurCage.ExtractFromCage,
-                    hp = 35,
+                    hp = 45,
                     yBump = 0.1f,
                 },
                 spawn3 = new()
@@ -268,22 +355,24 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     yBump = 0.5f,
                     yVelBump = 2,
                     rXVelBump = 2,
+                    customHook = AdjustBlobble,
                 }
             },
             new()
             {
-                hpSize = 650,
+                spawnCounts = (3, 3),
+                hpSize = 600,
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.PrimalAspidCage.ExtractFromCage,
-                    hp = 65,
+                    hp = 50,
                     yBump = 0.25f,
                     yVelBump = 2,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.FlukeFey,
-                    hp = 60,
+                    hp = 35,
                     yBump = 0.5f,
                     yVelBump = 1,
                     customHook = AdjustFlukeFey,
@@ -291,12 +380,13 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GreatHopper,
-                    hp = 85,
+                    hp = 65,
                     yBump = 1.5f,
                 }
             },
             new()
             {
+                spawnCounts = (2, 2),
                 hpSize = 550,
                 spawn1 = new()
                 {
@@ -304,46 +394,46 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     hp = 100,
                     yBump = 0.5f,
                     customHook = AdjustMawlek,
-                    force = true,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = 105,
+                    hp = 70,
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
                 spawn3 = new()
                 {
-                    spawner = () => Preloader.Instance.GodTamerBeast,
-                    hp = 155,
-                    yBump = 2.5f,
-                    customHook = AdjustGodTamerBeast,
+                    spawner = () => Preloader.Instance.WatcherKnight,
+                    hp = 105,
+                    yBump = 1.5f,
+                    customHook = AdjustWatcherKnight,
                 }
             },
             new()
             {
-                hpSize = 500,
+                spawnCounts = (2, 3),
+                hpSize = 450,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
-                    hp = 165,
+                    hp = 145,
                     yBump = 3f,
                     customHook = AdjustOblobble,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.Marmu,
-                    hp = 110,
+                    hp = 105,
                     yBump = 2f,
                     customHook = AdjustMarmu,
                 },
                 spawn3 = new()
                 {
-                    spawner = () => Preloader.Instance.WatcherKnight,
-                    hp = 145,
-                    yBump = 1.5f,
-                    customHook = AdjustWatcherKnight,
+                    spawner = () => Preloader.Instance.GodTamerBeast,
+                    hp = 120,
+                    yBump = 2.5f,
+                    customHook = AdjustGodTamerBeast,
                 }
             },
         };
@@ -367,8 +457,11 @@ internal class JarSpawnAdjuster : MonoBehaviour
         int total = 0;
         for (int i = thresholds.Count - 1; i >= 0; --i)
         {
-            thresholds[i].hpThreshold = total;
-            total += thresholds[i].hpSize;
+            var t = thresholds[i];
+            t.SetIndex(i);
+
+            t.hpThreshold = total;
+            total += t.hpSize;
         }
         phase2hp.Value = CollectorHp() / 2;
     }
@@ -388,6 +481,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
         {
             currentThreshold = next;
             currentThreshold.Apply(collectorFsm, mod);
+
+            // Don't allow hoarding of easy enemies.
+            JarSpawnThreshold.CleanupIndex(currentThreshold.GetIndex() - 2);
+
+            var vars = gameObject.LocateMyFSM("Control").FsmVariables;
+            var (min, max) = currentThreshold.spawnCounts;
+            vars.GetFsmInt("Spawn Min").Value = min;
+            vars.GetFsmInt("Spawn Max").Value = max;
         }
     }
 
@@ -422,6 +523,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
     private const float X1 = 40;
     private const float X2 = 70;
 
+    private static void AdjustBlobble(GameObject obj) => obj.AddComponent<BlobbleCorpseAdjuster>();
+
     private static void AdjustFlukeFey(GameObject obj) => obj.LocateMyFSM("Fluke Fly").FsmVariables.GetFsmBool("FLUKE MOTHER").Value = true;
 
     private const float MAWLEK_SCALE = 0.85f;
@@ -445,6 +548,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
         var init = fsm.GetState("Init");
         init.RemoveActionsOfType<NextFrameEvent>();
+        init.AddFirstAction(new Lambda(() => Destroy(fsm.gameObject.GetComponent<DamageHero>())));
         init.AddLastAction(new Lambda(() => fsm.SetState("Wake In Air")));
 
         var wakeLand = fsm.GetState("Wake Land");
@@ -453,6 +557,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             fsm.FsmVariables.GetFsmFloat("Start X").Value = MathExt.Mid(obj.transform.position.x, X1 + MAWLEK_BUFFER, X2 - MAWLEK_BUFFER);
             obj.transform.localScale = scale;
             fsm.SetState("Start");
+            fsm.gameObject.AddComponent<AddDamageHero>();
         }));
 
         var r2d = obj.GetComponent<Rigidbody2D>();
@@ -467,6 +572,16 @@ internal class JarSpawnAdjuster : MonoBehaviour
     private const float NOSK_Y_MIN = 99f;
     private const float NOSK_Y_MAX = 102f;
     private const float NOSK_SCALE = 0.65f;
+    private const float NOSK_SPIT_DAMPENER = 0.8f;
+
+    private static void NerfNoskSpitAttack(FsmState state)
+    {
+        foreach (var action in state.GetActionsOfType<FlingObjectsFromGlobalPoolVel>())
+        {
+            action.speedMinX.Value *= NOSK_SPIT_DAMPENER;
+            action.speedMaxX.Value *= NOSK_SPIT_DAMPENER;
+        }
+    }
 
     private static void AdjustWingedNosk(GameObject obj)
     {
@@ -482,7 +597,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         var fsm = obj.LocateMyFSM("Hornet Nosk");
 
         var vars = fsm.FsmVariables;
-        vars.GetFsmFloat("Swoop Height").Value = NOSK_Y_MIN - 1.9f;
+        vars.GetFsmFloat("Swoop Height").Value = NOSK_Y_MIN - 2.15f;
         vars.GetFsmFloat("X Min").Value = X1 + NOSK_X_IDLE_BUFFER;
         vars.GetFsmFloat("X Max").Value = X2 - NOSK_X_IDLE_BUFFER;
         vars.GetFsmFloat("Y Min").Value = NOSK_Y_MIN;
@@ -506,6 +621,10 @@ internal class JarSpawnAdjuster : MonoBehaviour
         fsm.GetState("Init Velocity").GetFirstActionOfType<Wait>().time = 0.25f;
 
         fsm.GetState("Shift Down?").GetFirstActionOfType<FloatCompare>().float2.Value = NOSK_Y_MAX;
+
+        // Nerf the spit attack
+        for (int i = 1; i <= 3; i++) NerfNoskSpitAttack(fsm.GetState($"Spit {i}"));
+        fsm.GetState("Spit 3").AddLastAction(new Lambda(() => fsm.SetState("Acid Roar End")));
 
         obj.transform.SetParent(arena.transform, true);
         obj.transform.localScale = new(NOSK_SCALE, NOSK_SCALE, NOSK_SCALE);
@@ -629,6 +748,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         Events.AddFsmEdit(PHASE_CONTROL, BuffPhaseControl);
         Events.AddFsmEdit(STUN_CONTROL, EliminateStunControl);
         spawnHook = new(typeof(SpawnJarControl).GetMethod("Behaviour", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget(), HookSpawnCustomJar);
+        ModHooks.LanguageGetHook += LanguageGetHook;
     }
 
     public override void Unload()
@@ -637,6 +757,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         Events.RemoveFsmEdit(PHASE_CONTROL, BuffPhaseControl);
         Events.RemoveFsmEdit(STUN_CONTROL, EliminateStunControl);
         spawnHook?.Dispose();
+        ModHooks.LanguageGetHook -= LanguageGetHook;
     }
 
     private static void BroadcastAll(PlayMakerFSM fsm, string eventName)
@@ -677,6 +798,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         // Adapt hp.
         var healthManager = fsm.gameObject.GetComponent<HealthManager>();
         fsm.GetState("Start Fall").AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
+        fsm.GetState("Roar").GetFirstActionOfType<SetFsmString>().setValue = "HOARDER";
 
         // Fix up the gates. Some enemies try to open them when they die.
         var bg1 = GameObject.Find("Battle Gate");
@@ -696,13 +818,6 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
     private void BuffPhaseControl(PlayMakerFSM fsm)
     {
-        fsm.GetState("Init").AddLastAction(new Lambda(() =>
-        {
-            var vars = fsm.gameObject.LocateMyFSM("Control").FsmVariables;
-            vars.GetFsmInt("Spawn Min").Value = 2;
-            vars.GetFsmInt("Spawn Max").Value = 3;
-        }));
-
         var jarAdjuster = fsm.gameObject.GetOrAddComponent<JarSpawnAdjuster>();
         fsm.GetState("Check").GetFirstActionOfType<IntCompare>().integer2 = jarAdjuster.Phase2Hp();
 
@@ -713,8 +828,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         {
             var vars = fsm.gameObject.LocateMyFSM("Control").FsmVariables;
             vars.GetFsmFloat("Resummon Pause").Value = 0.35f;
-            vars.GetFsmFloat("Spawn Recover Time").Value = 0.65f;
-            vars.GetFsmFloat("Hop X Speed").Value = -13.5f;
+            vars.GetFsmFloat("Hop X Speed").Value = -12.5f;
         }));
     }
 
@@ -749,6 +863,16 @@ internal class HoarderModule : ItemChanger.Modules.Module
         if (postSpawnHooks.TryGetValue(self, out var hook)) hook.Invoke(obj);
 
         return obj;
+    }
+    private static string LanguageGetHook(string key, string sheetTitle, string orig)
+    {
+        switch (key)
+        {
+            case "HOARDER_SUPER": return "The";
+            case "HOARDER_MAIN": return "Hoarder";
+            case "HOARDER_SUB": return "";
+            default: return orig;
+        }
     }
 }
 
