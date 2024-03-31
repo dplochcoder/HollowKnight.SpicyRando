@@ -372,7 +372,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.FlukeFey,
-                    hp = 35,
+                    hp = 40,
                     yBump = 0.5f,
                     yVelBump = 1,
                     customHook = AdjustFlukeFey,
@@ -380,14 +380,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GreatHopper,
-                    hp = 65,
+                    hp = 85,
                     yBump = 1.5f,
                 }
             },
             new()
             {
                 spawnCounts = (2, 2),
-                hpSize = 550,
+                hpSize = 600,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
@@ -398,7 +398,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = 70,
+                    hp = 80,
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
@@ -413,7 +413,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (2, 3),
-                hpSize = 450,
+                hpSize = 500,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
