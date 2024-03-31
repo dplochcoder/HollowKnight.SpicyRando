@@ -338,7 +338,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.ArmoredSquitCage.ExtractFromCage,
-                    hp = 35,
+                    hp = 45,
                     yBump = 0.3f,
                     yVelBump = 1,
                 },
@@ -742,6 +742,8 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
     private ILHook? spawnHook;
 
+    public int NumAttempts = 0;
+
     public override void Initialize()
     {
         Events.AddFsmEdit(CONTROL, ModifyCollectorFight);
@@ -797,8 +799,11 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         // Adapt hp.
         var healthManager = fsm.gameObject.GetComponent<HealthManager>();
+
         fsm.GetState("Start Fall").AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
-        fsm.GetState("Roar").GetFirstActionOfType<SetFsmString>().setValue = "HOARDER";
+
+        var roar = fsm.GetState("Roar");
+        roar.AddFirstAction(new Lambda(() => roar.GetFirstActionOfType<SetFsmString>().setValue = LanguageKey(++NumAttempts)));
 
         // Fix up the gates. Some enemies try to open them when they die.
         var bg1 = GameObject.Find("Battle Gate");
@@ -864,15 +869,24 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         return obj;
     }
+
+    private static string LanguageKey(int attempt) => (attempt == 5 || attempt == 20) ? $"HOARDER_{attempt}" : "HOARDER";
+
     private static string LanguageGetHook(string key, string sheetTitle, string orig)
     {
-        switch (key)
+        return key switch
         {
-            case "HOARDER_SUPER": return "The";
-            case "HOARDER_MAIN": return "Hoarder";
-            case "HOARDER_SUB": return "";
-            default: return orig;
-        }
+            "HOARDER_SUPER" => "The",
+            "HOARDER_MAIN" => "Hoarder",
+            "HOARDER_SUB" => "",
+            "HOARDER_5_SUPER" => "Maybe you should",
+            "HOARDER_5_MAIN" => "try a different",
+            "HOARDER_5_SUB" => "charm loadout?",
+            "HOARDER_20_SUPER" => "Stop dying to bosses, just use",
+            "HOARDER_20_MAIN" => "Descending Dark",
+            "HOARDER_20_SUB" => "and abuse your i frames",
+            _ => orig,
+        };
     }
 }
 
