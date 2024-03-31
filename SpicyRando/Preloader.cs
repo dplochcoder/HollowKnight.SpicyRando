@@ -89,6 +89,9 @@ internal class Preloader : PurenailCore.ModUtil.Preloader
 
     [Preload("GG_Nosk_Hornet", "Battle Scene/Hornet Nosk")]
     public GameObject WingedNosk { get; private set; }
+
+    [Preload("GG_Nosk_Hornet", "Battle Scene")]
+    public GameObject WingedNoskArena { get; private set; }
 }
 
 internal static class GameObjectExtensions

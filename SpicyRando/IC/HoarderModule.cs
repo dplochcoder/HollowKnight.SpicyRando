@@ -9,6 +9,7 @@ using MonoMod.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -146,6 +147,17 @@ internal class ZFixer : MonoBehaviour
     }
 }
 
+internal class TheRing : MonoBehaviour
+{
+    private void Awake() => StartCoroutine(DieInSevenSeconds());
+
+    private IEnumerator DieInSevenSeconds()
+    {
+        yield return new WaitForSeconds(7);
+        Destroy(gameObject);
+    }
+}
+
 internal class JarSpawnAdjuster : MonoBehaviour
 {
     internal record JarSpawn
@@ -156,6 +168,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         internal float yVelBump = 0;
         internal float rXVelBump = 0;
         internal Action<GameObject>? customHook;
+        internal bool force = false;
 
         internal void Apply(FsmState state, HoarderModule mod)
         {
@@ -188,11 +201,20 @@ internal class JarSpawnAdjuster : MonoBehaviour
         internal JarSpawn spawn3;
         internal int hpThreshold;
 
+        internal JarSpawn? GetForced()
+        {
+            if (spawn1.force) return spawn1;
+            else if (spawn2.force) return spawn2;
+            else if (spawn3.force) return spawn3;
+            else return null;
+        }
+
         internal void Apply(PlayMakerFSM fsm, HoarderModule mod)
         {
-            spawn1.Apply(fsm.GetState("Buzzer"), mod);
-            spawn2.Apply(fsm.GetState("Spitter"), mod);
-            spawn3.Apply(fsm.GetState("Roller"), mod);
+            var forced = GetForced();
+            (forced ?? spawn1).Apply(fsm.GetState("Buzzer"), mod);
+            (forced ?? spawn2).Apply(fsm.GetState("Spitter"), mod);
+            (forced ?? spawn3).Apply(fsm.GetState("Roller"), mod);
         }
     }
 
@@ -282,7 +304,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = 145,
+                    hp = 105,
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
@@ -346,7 +368,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         phase2hp.Value = CollectorHp() / 2;
     }
 
-    private const int STARTING_THRESHOLD = 4;  // 0;
+    private const int STARTING_THRESHOLD = 0;
 
     internal int CollectorHp() => thresholds[STARTING_THRESHOLD].hpSize + thresholds[STARTING_THRESHOLD].hpThreshold;
 
@@ -428,8 +450,55 @@ internal class JarSpawnAdjuster : MonoBehaviour
         AdjustCorpse<InfectedCorpseAdjuster>(obj, "Corpse Egg Guardian(Clone)", "corpse");
     }
 
+    private const float NOSK_X_IDLE_BUFFER = 3f;
+    private const float NOSK_X_SWOOP_BUFFER = 5f;
+    private const float NOSK_Y_MIN = 99f;
+    private const float NOSK_Y_MAX = 102f;
+    private const float NOSK_SCALE = 0.65f;
+
     private static void AdjustWingedNosk(GameObject obj)
     {
+        // Create an arena to hold Nosk
+        var arena = new GameObject("Nosk Arena");
+
+        var roofDust = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Roof Dust"));
+        roofDust.transform.position = new((X1 + X2) / 2, 105, 0);
+        roofDust.transform.SetParent(arena.transform, true);
+        var globDropper = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Glob Dropper"));
+        globDropper.transform.SetParent(arena.transform, true);
+
+        var fsm = obj.LocateMyFSM("Hornet Nosk");
+
+        var vars = fsm.FsmVariables;
+        vars.GetFsmFloat("Swoop Height").Value = NOSK_Y_MIN - 1.9f;
+        vars.GetFsmFloat("X Min").Value = X1 + NOSK_X_IDLE_BUFFER;
+        vars.GetFsmFloat("X Max").Value = X2 - NOSK_X_IDLE_BUFFER;
+        vars.GetFsmFloat("Y Min").Value = NOSK_Y_MIN;
+        vars.GetFsmFloat("Y Max").Value = NOSK_Y_MAX;
+
+        fsm.GetState("Dormant").AddLastAction(new Lambda(() => fsm.SetState("Set Pos")));
+
+        var distanceFly = fsm.GetState("Idle").GetFirstActionOfType<DistanceFly>();
+        distanceFly.distance.Value = 11f;
+        distanceFly.speedMax.Value = 6.5f;
+
+        var setPos = fsm.GetState("Set Pos").GetFirstActionOfType<SetPosition>();
+        setPos.x.Value = obj.transform.position.x;
+        setPos.y.Value = obj.transform.position.y;
+
+        fsm.GetState("Choose Attack").RemoveFirstActionOfType<IntCompare>();
+
+        fsm.GetState("Swoop L").GetFirstActionOfType<FloatCompare>().float2.Value = X1 + NOSK_X_SWOOP_BUFFER;
+        fsm.GetState("Swoop R").GetFirstActionOfType<FloatCompare>().float2.Value = X2 - NOSK_X_SWOOP_BUFFER;
+
+        fsm.GetState("Init Velocity").GetFirstActionOfType<Wait>().time = 0.25f;
+
+        fsm.GetState("Shift Down?").GetFirstActionOfType<FloatCompare>().float2.Value = NOSK_Y_MAX;
+
+        obj.transform.SetParent(arena.transform, true);
+        obj.transform.localScale = new(NOSK_SCALE, NOSK_SCALE, NOSK_SCALE);
+        obj.GetComponent<HealthManager>().OnDeath += () => arena.AddComponent<TheRing>();
+
         AdjustCorpse<InfectedCorpseAdjuster>(obj, "Corpse Hornet Nosk(Clone)", "corpse");
     }
 
