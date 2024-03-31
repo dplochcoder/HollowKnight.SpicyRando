@@ -9,7 +9,6 @@ using MonoMod.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -70,6 +69,11 @@ internal class InfectedCorpseAdjuster : CorpseAdjuster
 {
     protected override void AdjustCorpse(PlayMakerFSM fsm)
     {
+        var music = fsm.GetState("Music");
+        music?.AddFirstAction(new Lambda(() => fsm.SetState("Init")));
+        music?.RemoveActionsOfType<SendEventByName>();
+        music?.RemoveActionsOfType<TransitionToAudioSnapshot>();
+
         var init = fsm.GetState("Init");
         init.RemoveActionsOfType<SendEventByName>();
         init.GetFirstActionOfType<Wait>().time = 0.25f;
@@ -293,13 +297,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
             },
             new()
             {
-                hpSize = 600,
+                hpSize = 550,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
                     hp = 100,
                     yBump = 0.5f,
                     customHook = AdjustMawlek,
+                    force = true,
                 },
                 spawn2 = new()
                 {
@@ -428,7 +433,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
         Vector3 scale = new(MAWLEK_SCALE, MAWLEK_SCALE, MAWLEK_SCALE);
         obj.transform.localScale = scale;
 
+        obj.FindChild("Mawlek Head").LocateMyFSM("Mawlek Head").FsmVariables.GetFsmFloat("Shot Speed").Value = 23;
+
         var fsm = obj.LocateMyFSM("Mawlek Control");
+
+        var vars = fsm.FsmVariables;
+        vars.GetFsmFloat("Shot Speed").Value = 21;
+        vars.GetFsmFloat("Shot Speed Max").Value = 24;
+
         fsm.GetState("Pause").RemoveActionsOfType<NextFrameEvent>();
 
         var init = fsm.GetState("Init");
@@ -639,16 +651,21 @@ internal class HoarderModule : ItemChanger.Modules.Module
         gate.name = $"Renamed Gate {gate.name}";
 
         var fsm = gate.LocateMyFSM("BG Control");
+        fsm.AddFsmBool("REALLY OPEN", false);
+
         fsm.GetState("Destroy").RemoveActionsOfType<DestroySelf>();
         fsm.GetState("Quick Open").AddFirstAction(new Lambda(() => fsm.SetState("Close 2")));
-
-        FsmEvent realBgOpen = new("REAL BG OPEN");
-        foreach (var stateName in new string[] { "Close 2", "Quick Close", "Double Close" })
+        fsm.GetState("Open").AddFirstAction(new Lambda(() =>
         {
-            var state = fsm.GetState(stateName);
-            state.RemoveTransitionsOn("BG OPEN");
-            state.AddTransition(realBgOpen, fsm.GetState("Open"));
-        }
+            if (!fsm.FsmVariables.GetFsmBool("REALLY OPEN").Value) fsm.SetState("Close 2");
+        }));
+    }
+
+    private static void ReallyOpen(GameObject gate)
+    {
+        var fsm = gate.LocateMyFSM("BG Control");
+        fsm.FsmVariables.GetFsmBool("REALLY OPEN").Value = true;
+        fsm.SetState("Open");
     }
 
     private void ModifyCollectorFight(PlayMakerFSM fsm)
@@ -662,12 +679,19 @@ internal class HoarderModule : ItemChanger.Modules.Module
         fsm.GetState("Start Fall").AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
 
         // Fix up the gates. Some enemies try to open them when they die.
+        var bg1 = GameObject.Find("Battle Gate");
+        var bg2 = GameObject.Find("Battle Gate (1)");
+
         var battleScene = fsm.gameObject.transform.parent.gameObject;
         var bFsm = battleScene.LocateMyFSM("Control");
-        bFsm.GetState("End").AddLastAction(new Lambda(() => BroadcastAll(bFsm, "REAL BG OPEN")));
+        bFsm.GetState("End").AddLastAction(new Lambda(() =>
+        {
+            ReallyOpen(bg1);
+            ReallyOpen(bg2);
+        }));
 
-        TightenBattleGate(GameObject.Find("Battle Gate"));
-        TightenBattleGate(GameObject.Find("Battle Gate (1)"));
+        TightenBattleGate(bg1);
+        TightenBattleGate(bg2);
     }
 
     private void BuffPhaseControl(PlayMakerFSM fsm)
