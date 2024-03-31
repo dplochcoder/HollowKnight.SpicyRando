@@ -5,6 +5,9 @@ namespace SpicyRando;
 
 internal class Preloader : PurenailCore.ModUtil.Preloader
 {
+    [Preload("Crossroads_19", "_Enemies/Spitter")]
+    public GameObject Aspid { get; private set; }
+
     public static Preloader Instance { get; private set; } = new();
 
     [Preload("Room_Colosseum_Gold", "Colosseum Manager/Waves/Wave 4/Colosseum Cage Small")]
@@ -75,9 +78,6 @@ internal class Preloader : PurenailCore.ModUtil.Preloader
 
     [Preload("Room_Colosseum_Gold", "Colosseum Manager/Waves/Wave 17/Colosseum Cage Small (2)")]
     public GameObject PrimalAspidCage { get; private set; }
-
-    [Preload("Crossroads_19", "_Enemies/Spitter")]
-    public GameObject Aspid { get; private set; }
 
     [Preload("Tutorial_01", "_Enemies/Buzzer 2")]
     public GameObject Squit { get; private set; }
