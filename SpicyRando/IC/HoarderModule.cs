@@ -387,7 +387,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (2, 2),
-                hpSize = 600,
+                hpSize = 550,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
@@ -398,7 +398,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = 80,
+                    hp = 70,
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
@@ -413,7 +413,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (2, 3),
-                hpSize = 500,
+                hpSize = 450,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
