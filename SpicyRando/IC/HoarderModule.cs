@@ -365,7 +365,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.PrimalAspidCage.ExtractFromCage,
-                    hp = 50,
+                    hp = 40,
                     yBump = 0.25f,
                     yVelBump = 2,
                 },
@@ -387,7 +387,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (2, 2),
-                hpSize = 550,
+                hpSize = 500,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
@@ -413,7 +413,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (2, 3),
-                hpSize = 450,
+                hpSize = 400,
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
