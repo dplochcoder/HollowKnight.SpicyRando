@@ -3,7 +3,6 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
-using MenuChanger;
 using Modding;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
