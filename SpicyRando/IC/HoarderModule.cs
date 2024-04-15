@@ -957,7 +957,7 @@ internal class HoarderFeature : SpicyFeature
 {
     public string Name => "Hoarder";
     public string Description => "Expands the variety of Collector's jar collection";
-    public bool Experimental() => true;
+    public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.Hoarder;
     public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
     public void Install()
