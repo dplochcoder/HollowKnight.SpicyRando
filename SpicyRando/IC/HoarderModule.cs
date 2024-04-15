@@ -3,6 +3,7 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
+using MenuChanger;
 using Modding;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -191,28 +192,60 @@ internal class TheRing : MonoBehaviour
     }
 }
 
+internal class NailSelector<T>
+{
+    private readonly T nail0;
+    private readonly T nail1;
+    private readonly T nail2;
+    private readonly T nail3;
+    private readonly T nail4;
+    private readonly T plando;
+
+    internal NailSelector(T nail0, T nail1, T nail2, T nail3, T nail4, T plando)
+    {
+        this.nail0 = nail0;
+        this.nail1 = nail1;
+        this.nail2 = nail2;
+        this.nail3 = nail3;
+        this.nail4 = nail4;
+        this.plando = plando;
+    }
+
+    internal NailSelector(T singular) : this(singular, singular, singular, singular, singular, singular) { }
+
+    internal T Get(bool plando, int nailDamage)
+    {
+        if (plando) return this.plando;
+
+        if (nailDamage <= 5) return nail0;
+        else if (nailDamage <= 9) return nail1;
+        else if (nailDamage <= 13) return nail2;
+        else if (nailDamage <= 17) return nail3;
+        else return nail4;
+    }
+}
+
 internal class JarSpawnAdjuster : MonoBehaviour
 {
     internal record JarSpawn
     {
         internal Func<GameObject> spawner;
-        internal int hp;
+        internal NailSelector<int> hp;
         internal float yBump = 0;
         internal float yVelBump = 0;
         internal float rXVelBump = 0;
         internal Action<GameObject>? customHook;
 
         internal int index;
-        internal bool force = false;
 
-        internal void Apply(FsmState state, HoarderModule mod)
+        internal void Apply(FsmState state, JarSpawnAdjuster adjuster, HoarderModule mod)
         {
             var prefab = spawner.Invoke();
             mod.SetPostSpawnHook(prefab, PostSpawnHooks);
 
             var action = state.GetFirstActionOfType<SetSpawnJarContents>();
             action.enemyPrefab.Value = prefab;
-            action.enemyHealth.Value = hp;
+            action.enemyHealth.Value = adjuster.Select(hp);
         }
 
         private void PostSpawnHooks(GameObject obj)
@@ -266,8 +299,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
         internal static event Action<int>? OnCleanupIndex;
         internal static void CleanupIndex(int index) => OnCleanupIndex?.Invoke(index);
 
-        internal (int, int) spawnCounts;
-        internal int hpSize;
+        internal (NailSelector<int>, NailSelector<int>) spawnCounts;
+        internal NailSelector<int> hpSize;
         internal JarSpawn spawn1;
         internal JarSpawn spawn2;
         internal JarSpawn spawn3;
@@ -286,20 +319,11 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
         internal int GetIndex() => index;
 
-        private JarSpawn? GetForced()
+        internal void Apply(PlayMakerFSM fsm, JarSpawnAdjuster adjuster, HoarderModule mod)
         {
-            if (spawn1.force) return spawn1;
-            else if (spawn2.force) return spawn2;
-            else if (spawn3.force) return spawn3;
-            else return null;
-        }
-
-        internal void Apply(PlayMakerFSM fsm, HoarderModule mod)
-        {
-            var forced = GetForced();
-            (forced ?? spawn1).Apply(fsm.GetState("Buzzer"), mod);
-            (forced ?? spawn2).Apply(fsm.GetState("Spitter"), mod);
-            (forced ?? spawn3).Apply(fsm.GetState("Roller"), mod);
+            spawn1.Apply(fsm.GetState("Buzzer"), adjuster, mod);
+            spawn2.Apply(fsm.GetState("Spitter"), adjuster, mod);
+            spawn3.Apply(fsm.GetState("Roller"), adjuster, mod);
         }
     }
 
@@ -309,49 +333,49 @@ internal class JarSpawnAdjuster : MonoBehaviour
         {
             new()
             {
-                spawnCounts = (3, 3),
-                hpSize = 400,
+                spawnCounts = (new(2, 2, 2, 3, 3, 3), new(3)),
+                hpSize = new(150, 200, 250, 300, 350, 400),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Aspid,
-                    hp = 15,
+                    hp = new(15),
                     yBump = 0.25f,
                     yVelBump = 0.25f,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.Baldur,
-                    hp = 15,
+                    hp = new(15),
                 },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.Squit,
-                    hp = 8,
+                    hp = new(8),
                     yBump = 0.25f,
                     yVelBump = 0.25f,
                 }
             },
             new()
             {
-                spawnCounts = (2, 3),
-                hpSize = 500,
+                spawnCounts = (new(2), new(3)),
+                hpSize = new(200, 250, 300, 350, 400, 500),
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.ArmoredSquitCage.ExtractFromCage,
-                    hp = 45,
+                    hp = new(20, 25, 30, 35, 40, 45),
                     yBump = 0.3f,
                     yVelBump = 1,
                 },
                 spawn2 = new()
                 {
                     spawner = Preloader.Instance.ArmoredBaldurCage.ExtractFromCage,
-                    hp = 45,
+                    hp = new(20, 25, 30, 35, 40, 45),
                     yBump = 0.1f,
                 },
                 spawn3 = new()
                 {
                     spawner = Preloader.Instance.BattleObbleCage.ExtractFromCage,
-                    hp = 50,
+                    hp = new(25, 30, 35, 40, 45, 50),
                     yBump = 0.5f,
                     yVelBump = 2,
                     rXVelBump = 2,
@@ -360,19 +384,19 @@ internal class JarSpawnAdjuster : MonoBehaviour
             },
             new()
             {
-                spawnCounts = (3, 3),
-                hpSize = 600,
+                spawnCounts = (new(2, 2, 2, 2, 3, 3), new(3)),
+                hpSize = new(250, 325, 400, 475, 550, 600),
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.PrimalAspidCage.ExtractFromCage,
-                    hp = 40,
+                    hp = new(15, 20, 25, 30, 35, 40),
                     yBump = 0.25f,
                     yVelBump = 2,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.FlukeFey,
-                    hp = 40,
+                    hp = new(15, 20, 25, 30, 35, 40),
                     yBump = 0.5f,
                     yVelBump = 1,
                     customHook = AdjustFlukeFey,
@@ -380,58 +404,58 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GreatHopper,
-                    hp = 85,
+                    hp = new(45, 55, 65, 75, 85, 85),
                     yBump = 1.5f,
                 }
             },
             new()
             {
-                spawnCounts = (2, 2),
-                hpSize = 500,
+                spawnCounts = (new(1, 1, 2, 2, 2, 2), new(2)),
+                hpSize = new(200, 250, 300, 350, 400, 500),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
-                    hp = 100,
+                    hp = new(50, 60, 70, 80, 90, 100),
                     yBump = 0.5f,
                     customHook = AdjustMawlek,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = 70,
+                    hp = new(40, 45, 50, 55, 60, 70),
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.WatcherKnight,
-                    hp = 105,
+                    hp = new(55, 65, 75, 85, 95, 105),
                     yBump = 1.5f,
                     customHook = AdjustWatcherKnight,
                 }
             },
             new()
             {
-                spawnCounts = (2, 3),
-                hpSize = 400,
+                spawnCounts = (new(2), new(2, 2, 3, 3, 3, 3)),
+                hpSize = new(200, 250, 300, 350, 400, 400),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
-                    hp = 145,
+                    hp = new(70, 85, 100, 115, 130, 145),
                     yBump = 3f,
                     customHook = AdjustOblobble,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.Marmu,
-                    hp = 105,
+                    hp = new(55, 65, 75, 85, 95, 105),
                     yBump = 2f,
                     customHook = AdjustMarmu,
                 },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GodTamerBeast,
-                    hp = 120,
+                    hp = new(70, 80, 90, 100, 110, 120),
                     yBump = 2.5f,
                     customHook = AdjustGodTamerBeast,
                 }
@@ -442,15 +466,29 @@ internal class JarSpawnAdjuster : MonoBehaviour
     private List<JarSpawnThreshold> thresholds = SpawnLists();
     private FsmInt phase2hp = new(0);
     private HoarderModule? mod;
+    private bool plando;
+    private int? nailDamage;
+    private bool initialized = false;
 
     private HealthManager healthManager;
     private PlayMakerFSM collectorFsm;
     private JarSpawnThreshold? currentThreshold;
 
-    internal void SetMod(HoarderModule module) => mod = module;
-
-    private void Awake()
+    internal void SetMod(HoarderModule module, bool plando, int dmg)
     {
+        mod = module;
+        this.plando = plando;
+        nailDamage = dmg;
+    }
+
+    internal T Select<T>(NailSelector<T> ns) => ns.Get(plando, nailDamage ?? 21);
+
+    private bool MaybeInit()
+    {
+        if (initialized) return true;
+        if (mod == null) return false;
+
+        initialized = true;
         healthManager = GetComponent<HealthManager>();
         collectorFsm = gameObject.LocateMyFSM("Control");
 
@@ -461,14 +499,15 @@ internal class JarSpawnAdjuster : MonoBehaviour
             t.SetIndex(i);
 
             t.hpThreshold = total;
-            total += t.hpSize;
+            total += Select(t.hpSize);
         }
         phase2hp.Value = CollectorHp() / 2;
+        return true;
     }
 
     private const int STARTING_THRESHOLD = 0;
 
-    internal int CollectorHp() => thresholds[STARTING_THRESHOLD].hpSize + thresholds[STARTING_THRESHOLD].hpThreshold;
+    internal int CollectorHp() => Select(thresholds[STARTING_THRESHOLD].hpSize) + thresholds[STARTING_THRESHOLD].hpThreshold;
 
     internal FsmInt Phase2Hp() => phase2hp;
 
@@ -476,19 +515,21 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     private void Update()
     {
+        if (!MaybeInit()) return;
+
         var next = GetCurrentThreshold();
         if (next != null && next.hpThreshold != (currentThreshold?.hpThreshold ?? -1))
         {
             currentThreshold = next;
-            currentThreshold.Apply(collectorFsm, mod);
+            currentThreshold.Apply(collectorFsm, this, mod);
 
             // Don't allow hoarding of easy enemies.
             JarSpawnThreshold.CleanupIndex(currentThreshold.GetIndex() - 2);
 
             var vars = gameObject.LocateMyFSM("Control").FsmVariables;
             var (min, max) = currentThreshold.spawnCounts;
-            vars.GetFsmInt("Spawn Min").Value = min;
-            vars.GetFsmInt("Spawn Max").Value = max;
+            vars.GetFsmInt("Spawn Min").Value = Select(min);
+            vars.GetFsmInt("Spawn Max").Value = Select(max);
         }
     }
 
@@ -742,6 +783,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
     private ILHook? spawnHook;
 
+    public bool? ForPlando;
     public int NumAttempts = 0;
 
     public override void Initialize()
@@ -795,7 +837,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
     {
         // Adjust jar spawns.
         var jarAdjuster = fsm.gameObject.GetOrAddComponent<JarSpawnAdjuster>();
-        jarAdjuster.SetMod(this);
+        jarAdjuster.SetMod(this, this.ForPlando ?? true, PlayerData.instance.nailDamage);
 
         // Adapt hp.
         var healthManager = fsm.gameObject.GetComponent<HealthManager>();
@@ -918,5 +960,9 @@ internal class HoarderFeature : SpicyFeature
     public bool Experimental() => true;
     public bool Get(FeatureSettings settings) => settings.Hoarder;
     public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
-    public void Install() => ItemChangerMod.Modules.Add<HoarderModule>();
+    public void Install()
+    {
+        var mod = ItemChangerMod.Modules.Add<HoarderModule>();
+        mod.ForPlando = false;
+    }
 }
