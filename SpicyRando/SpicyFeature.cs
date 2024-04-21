@@ -1,4 +1,6 @@
-﻿using SpicyRando.IC;
+﻿using RandomizerCore.Logic;
+using RandomizerMod.Settings;
+using SpicyRando.IC;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +13,7 @@ internal interface SpicyFeature
     public bool Experimental();
     public bool Get(FeatureSettings settings);
     public void Set(FeatureSettings settings, bool value);
+    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb);
     public void Install();
 }
 

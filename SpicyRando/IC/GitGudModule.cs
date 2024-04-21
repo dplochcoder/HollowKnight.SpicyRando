@@ -4,6 +4,8 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using PurenailCore.SystemUtil;
+using RandomizerCore.Logic;
+using RandomizerMod.Settings;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -368,5 +370,9 @@ internal class GitGudFeature : SpicyFeature
     public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.GitGud;
     public void Set(FeatureSettings settings, bool value) => settings.GitGud = value;
+    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
+    {
+        lmb.DoLogicEdit(new("COMBAT[Hornet1]", "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"));
+    }
     public void Install() => ItemChangerMod.Modules.Add<GitGudModule>();
 }

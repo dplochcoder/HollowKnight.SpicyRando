@@ -7,6 +7,8 @@ using Modding;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using RandomizerCore.Logic;
+using RandomizerMod.Settings;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -959,6 +961,11 @@ internal class HoarderFeature : SpicyFeature
     public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.Hoarder;
     public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
+    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
+    {
+        lmb.DoLogicEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS | FIREBALL + SCREAM + Shaman_Stone | FIREBALL>1 + SCREAM>1)"));
+        throw new NotImplementedException();
+    }
     public void Install()
     {
         var mod = ItemChangerMod.Modules.Add<HoarderModule>();

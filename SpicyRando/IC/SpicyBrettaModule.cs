@@ -5,6 +5,8 @@ using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using Modding;
+using RandomizerCore.Logic;
+using RandomizerMod.Settings;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -336,5 +338,6 @@ internal class SpicyBrettaFeature : SpicyFeature
     public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.SpicyBretta;
     public void Set(FeatureSettings settings, bool value) => settings.SpicyBretta = value;
+    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) { }
     public void Install() => ItemChangerMod.Modules.Add<SpicyBrettaModule>();
 }

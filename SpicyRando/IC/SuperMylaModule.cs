@@ -3,6 +3,8 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
+using RandomizerCore.Logic;
+using RandomizerMod.Settings;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -175,5 +177,6 @@ internal class SuperMylaFeature : SpicyFeature
     public bool Experimental() => false;
     public bool Get(FeatureSettings settings) => settings.SuperMyla;
     public void Set(FeatureSettings settings, bool value) => settings.SuperMyla = value;
+    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) { }
     public void Install() => ItemChangerMod.Modules.Add<SuperMylaModule>();
 }

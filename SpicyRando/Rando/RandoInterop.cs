@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
+using RandomizerCore.Logic;
 using RandomizerMod.Extensions;
 using RandomizerMod.Logging;
 using RandomizerMod.RC;
+using RandomizerMod.Settings;
 using System.Collections.Generic;
 using System.IO;
 
@@ -11,6 +13,7 @@ internal class RandoInterop
 {
     internal static void Hook()
     {
+        RCData.RuntimeLogicOverride.Subscribe(10f, ApplyLogicChanges);
         RandoController.OnExportCompleted += InstallSpicyRandoFeatures;
         RandoController.OnCalculateHash += AdjustHash;
         SettingsLog.AfterLogSettings += LogSpicyRandoSettings;
@@ -18,6 +21,11 @@ internal class RandoInterop
     }
 
     private static FeatureSettings Settings => SpicyRando.GS.randoSettings.features;
+
+    private static void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
+    {
+        foreach (var feature in SpicyFeatures.All()) if (feature.Get(Settings)) feature.ApplyLogicChanges(gs, lmb);
+    }
 
     private static void InstallSpicyRandoFeatures(RandoController rc)
     {
