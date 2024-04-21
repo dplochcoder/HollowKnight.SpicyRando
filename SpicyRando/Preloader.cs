@@ -49,6 +49,9 @@ internal class Preloader : PurenailCore.ModUtil.Preloader
     [Preload("Deepnest_East_06", "Giant Hopper (1)")]
     public GameObject GreatHopper { get; private set; }
 
+    [PrefabPreload("Fungus1_21", "Grass Ball")]
+    public GameObject GrassBall { get; private set; }
+
     [Preload("Hive_01", "Hive Breakable Pillar (1)")]
     public GameObject HiveWall { get; private set; }
 
