@@ -963,8 +963,7 @@ internal class HoarderFeature : SpicyFeature
     public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
     public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        lmb.DoLogicEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS | FIREBALL + SCREAM + Shaman_Stone | FIREBALL>1 + SCREAM>1)"));
-        throw new NotImplementedException();
+        lmb.DoMacroEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS | FIREBALL + SCREAM + Shaman_Stone | FIREBALL>1 + SCREAM>1)"));
     }
     public void Install()
     {

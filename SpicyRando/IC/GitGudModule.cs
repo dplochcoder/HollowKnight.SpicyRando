@@ -372,7 +372,7 @@ internal class GitGudFeature : SpicyFeature
     public void Set(FeatureSettings settings, bool value) => settings.GitGud = value;
     public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        lmb.DoLogicEdit(new("COMBAT[Hornet1]", "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"));
+        lmb.DoMacroEdit(new("COMBAT[Hornet_1]", "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"));
     }
     public void Install() => ItemChangerMod.Modules.Add<GitGudModule>();
 }
