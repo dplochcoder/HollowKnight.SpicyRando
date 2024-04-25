@@ -10,6 +10,10 @@ Spicy Rando is integrated with Rando Settings Manager for easy sharing of settin
 
 ## Features
 
+### The Hoarder
+
+Enabling this feature slightly expands the strength and variety of the Collector's minions.
+
 ### Spicy Bretta
 
 Enabling this feature makes rescuing Bretta slightly more difficult after obtaining Mantis Claw.
@@ -17,3 +21,7 @@ Enabling this feature makes rescuing Bretta slightly more difficult after obtain
 ### Super Myla
 
 Enabling this feature makes it slightly more difficult to kill Myla after obtaining Crystal Heart.
+
+### Git Gud
+
+Enabling this feature makes obtaining Mothwing Cloak slightly more difficult.
