@@ -276,7 +276,7 @@ internal class GitGudModule : ItemChanger.Modules.Module
         int nailDmg = PlayerData.instance.nailDamage;
 
         // Scale to nail
-        int fakeDmg = (int)Mathf.Max(5, nailDmg + 0.75f * (nailDmg - 5));
+        int fakeDmg = (int)(5 + 0.75f * Mathf.Max(nailDmg - 5, 0));
         return 75 * fakeDmg;
     }
 
