@@ -497,7 +497,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             t.hpThreshold = total;
             total += Select(t.hpSize);
         }
-        phase2hp.Value = thresholds[2].hpThreshold + thresholds[2].hpSize / 2;
+        phase2hp.Value = thresholds[2].hpThreshold + thresholds[2].hpSize.Get(plando) / 2;
         return true;
     }
 
