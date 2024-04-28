@@ -193,37 +193,20 @@ internal class TheRing : MonoBehaviour
     }
 }
 
-internal class NailSelector<T>
+internal class StatSelector<T>
 {
-    private readonly T nail0;
-    private readonly T nail1;
-    private readonly T nail2;
-    private readonly T nail3;
-    private readonly T nail4;
+    private readonly T main;
     private readonly T plando;
 
-    internal NailSelector(T nail0, T nail1, T nail2, T nail3, T nail4, T plando)
+    internal StatSelector(T main, T plando)
     {
-        this.nail0 = nail0;
-        this.nail1 = nail1;
-        this.nail2 = nail2;
-        this.nail3 = nail3;
-        this.nail4 = nail4;
+        this.main = main;
         this.plando = plando;
     }
 
-    internal NailSelector(T singular) : this(singular, singular, singular, singular, singular, singular) { }
+    internal StatSelector(T singular) : this(singular, singular) { }
 
-    internal T Get(bool plando, int nailDamage)
-    {
-        if (plando) return this.plando;
-
-        if (nailDamage <= 5) return nail0;
-        else if (nailDamage <= 9) return nail1;
-        else if (nailDamage <= 13) return nail2;
-        else if (nailDamage <= 17) return nail3;
-        else return nail4;
-    }
+    internal T Get(bool plando) => plando ? this.plando : this.main;
 }
 
 internal class JarSpawnAdjuster : MonoBehaviour
@@ -231,7 +214,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
     internal record JarSpawn
     {
         internal Func<GameObject> spawner;
-        internal NailSelector<int> hp;
+        internal StatSelector<int> hp;
         internal float yBump = 0;
         internal float yVelBump = 0;
         internal float rXVelBump = 0;
@@ -300,8 +283,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
         internal static event Action<int>? OnCleanupIndex;
         internal static void CleanupIndex(int index) => OnCleanupIndex?.Invoke(index);
 
-        internal (NailSelector<int>, NailSelector<int>) spawnCounts;
-        internal NailSelector<int> hpSize;
+        internal (StatSelector<int>, StatSelector<int>) spawnCounts;
+        internal StatSelector<int> hpSize;
         internal JarSpawn spawn1;
         internal JarSpawn spawn2;
         internal JarSpawn spawn3;
@@ -334,8 +317,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
         {
             new()
             {
-                spawnCounts = (new(2, 2, 2, 3, 3, 3), new(3)),
-                hpSize = new(150, 200, 250, 300, 350, 400),
+                spawnCounts = (new(2), new(3)),
+                hpSize = new(500, 400),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Aspid,
@@ -359,24 +342,24 @@ internal class JarSpawnAdjuster : MonoBehaviour
             new()
             {
                 spawnCounts = (new(2), new(3)),
-                hpSize = new(200, 250, 300, 350, 400, 500),
+                hpSize = new(400, 500),
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.ArmoredSquitCage.ExtractFromCage,
-                    hp = new(20, 25, 30, 35, 40, 45),
+                    hp = new(40, 45),
                     yBump = 0.3f,
                     yVelBump = 1,
                 },
                 spawn2 = new()
                 {
                     spawner = Preloader.Instance.ArmoredBaldurCage.ExtractFromCage,
-                    hp = new(20, 25, 30, 35, 40, 45),
+                    hp = new(40, 45),
                     yBump = 0.1f,
                 },
                 spawn3 = new()
                 {
                     spawner = Preloader.Instance.BattleObbleCage.ExtractFromCage,
-                    hp = new(25, 30, 35, 40, 45, 50),
+                    hp = new(45, 50),
                     yBump = 0.5f,
                     yVelBump = 2,
                     rXVelBump = 2,
@@ -385,19 +368,19 @@ internal class JarSpawnAdjuster : MonoBehaviour
             },
             new()
             {
-                spawnCounts = (new(2, 2, 2, 2, 3, 3), new(3)),
-                hpSize = new(250, 325, 400, 475, 550, 600),
+                spawnCounts = (new(2, 3), new(3)),
+                hpSize = new(400, 600),
                 spawn1 = new()
                 {
                     spawner = Preloader.Instance.PrimalAspidCage.ExtractFromCage,
-                    hp = new(15, 20, 25, 30, 35, 40),
+                    hp = new(35, 40),
                     yBump = 0.25f,
                     yVelBump = 2,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.FlukeFey,
-                    hp = new(15, 20, 25, 30, 35, 40),
+                    hp = new(30, 40),
                     yBump = 0.5f,
                     yVelBump = 1,
                     customHook = AdjustFlukeFey,
@@ -405,58 +388,58 @@ internal class JarSpawnAdjuster : MonoBehaviour
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GreatHopper,
-                    hp = new(45, 55, 65, 75, 85, 85),
+                    hp = new(60, 85),
                     yBump = 1.5f,
                 }
             },
             new()
             {
-                spawnCounts = (new(1, 1, 2, 2, 2, 2), new(2)),
-                hpSize = new(200, 250, 300, 350, 400, 500),
+                spawnCounts = (new(2), new(2)),
+                hpSize = new(300, 500),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.BroodingMawlek,
-                    hp = new(50, 60, 70, 80, 90, 100),
+                    hp = new(90, 100),
                     yBump = 0.5f,
                     customHook = AdjustMawlek,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.WingedNosk,
-                    hp = new(40, 45, 50, 55, 60, 70),
+                    hp = new(60, 70),
                     yBump = 1.5f,
                     customHook = AdjustWingedNosk,
                 },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.WatcherKnight,
-                    hp = new(55, 65, 75, 85, 95, 105),
+                    hp = new(90, 105),
                     yBump = 1.5f,
                     customHook = AdjustWatcherKnight,
                 }
             },
             new()
             {
-                spawnCounts = (new(2), new(2, 2, 3, 3, 3, 3)),
-                hpSize = new(200, 250, 300, 350, 400, 400),
+                spawnCounts = (new(2), new(2)),
+                hpSize = new(250, 400),
                 spawn1 = new()
                 {
                     spawner = () => Preloader.Instance.Oblobble,
-                    hp = new(70, 85, 100, 115, 130, 145),
+                    hp = new(145),
                     yBump = 3f,
                     customHook = AdjustOblobble,
                 },
                 spawn2 = new()
                 {
                     spawner = () => Preloader.Instance.Marmu,
-                    hp = new(55, 65, 75, 85, 95, 105),
+                    hp = new(96, 105),
                     yBump = 2f,
                     customHook = AdjustMarmu,
                 },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.GodTamerBeast,
-                    hp = new(70, 80, 90, 100, 110, 120),
+                    hp = new(110, 120),
                     yBump = 2.5f,
                     customHook = AdjustGodTamerBeast,
                 }
@@ -468,21 +451,21 @@ internal class JarSpawnAdjuster : MonoBehaviour
     private FsmInt phase2hp = new(0);
     private HoarderModule? mod;
     private bool plando;
-    private int? nailDamage;
     private bool initialized = false;
 
     private HealthManager healthManager;
     private PlayMakerFSM collectorFsm;
     private JarSpawnThreshold? currentThreshold;
 
-    internal void SetMod(HoarderModule module, bool plando, int dmg)
+    internal void SetMod(HoarderModule module, bool plando)
     {
         mod = module;
         this.plando = plando;
-        nailDamage = dmg;
     }
 
-    internal T Select<T>(NailSelector<T> ns) => ns.Get(plando, nailDamage ?? 21);
+    internal T Select<T>(StatSelector<T> ns) => ns.Get(plando);
+
+    private bool blockMultiSummon = false;
 
     private bool MaybeInit()
     {
@@ -493,6 +476,18 @@ internal class JarSpawnAdjuster : MonoBehaviour
         healthManager = GetComponent<HealthManager>();
         collectorFsm = gameObject.LocateMyFSM("Control");
 
+        if (!plando)
+        {
+            collectorFsm.GetState("Summon?").AddFirstAction(new Lambda(() =>
+            {
+                blockMultiSummon = currentThreshold.GetIndex() >= 3 && (GameObject.FindGameObjectsWithTag("Boss")?.Length ?? 0) >= 2;
+            }));
+            collectorFsm.GetState("Resummon?").AddFirstAction(new Lambda(() =>
+            {
+                if (blockMultiSummon) collectorFsm.SendEvent("END");
+            }));
+        }
+
         int total = 0;
         for (int i = thresholds.Count - 1; i >= 0; --i)
         {
@@ -502,7 +497,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
             t.hpThreshold = total;
             total += Select(t.hpSize);
         }
-        phase2hp.Value = CollectorHp() / 2;
+        phase2hp.Value = thresholds[2].hpThreshold + thresholds[2].hpSize / 2;
         return true;
     }
 
@@ -834,16 +829,56 @@ internal class HoarderModule : ItemChanger.Modules.Module
         fsm.SetState("Open");
     }
 
+    private static int ChooseHops(bool lunged)
+    {
+        var c = UnityEngine.Random.Range(0f, 1f);
+        if (lunged) return c < 0.5f ? 1 : 2;
+        else
+        {
+            if (c < 0.25f) return 1;
+            else if (c < 0.75f) return 2;
+            else return 3;
+        }
+    }
+
+    private static bool ChooseLunge(List<bool> lunged)
+    {
+        if (!lunged[0] && UnityEngine.Random.Range(0f, 1f) < 0.6f)
+        {
+            lunged[0] = true;
+            return true;
+        }
+        else
+        {
+            lunged[0] = false;
+            return false;
+        }
+    }
+
     private void ModifyCollectorFight(PlayMakerFSM fsm)
     {
         // Adjust jar spawns.
         var jarAdjuster = fsm.gameObject.GetOrAddComponent<JarSpawnAdjuster>();
-        jarAdjuster.SetMod(this, this.ForPlando ?? true, PlayerData.instance.nailDamage);
+        jarAdjuster.SetMod(this, this.ForPlando ?? true);
 
         // Adapt hp.
         var healthManager = fsm.gameObject.GetComponent<HealthManager>();
 
         fsm.GetState("Start Fall").AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
+
+        if (!(ForPlando ?? true))
+        {
+            List<bool> lunged = new() { false };
+            var setHops = fsm.GetState("Set Hops");
+            setHops.RemoveActionsOfType<RandomInt>();
+            setHops.AddLastAction(new Lambda(() => fsm.FsmVariables.GetFsmInt("Hops").Value = ChooseHops(lunged[0])));
+
+            var moveChoice = fsm.GetState("Move Choice");
+            moveChoice.RemoveActionsOfType<SendRandomEventV2>();
+            moveChoice.AddFirstAction(new Lambda(() => fsm.SendEvent(ChooseLunge(lunged) ? "LUNGE" : "JUMP AWAY")));
+
+            fsm.GetState("Jump Antic").AddFirstAction(new Lambda(() => lunged[0] = false));
+        }
 
         var roar = fsm.GetState("Roar");
         roar.AddFirstAction(new Lambda(() => roar.GetFirstActionOfType<SetFsmString>().setValue = LanguageKey(++NumAttempts)));
@@ -963,7 +998,7 @@ internal class HoarderFeature : SpicyFeature
     public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
     public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        lmb.DoMacroEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS | FIREBALL + SCREAM + Shaman_Stone | FIREBALL>1 + SCREAM>1)"));
+        lmb.DoMacroEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS + FIREBALL + SCREAM | FIREBALL>1 + SCREAM>1)"));
     }
     public void Install()
     {
