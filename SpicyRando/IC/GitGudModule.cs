@@ -276,8 +276,8 @@ internal class GitGudModule : ItemChanger.Modules.Module
         int nailDmg = PlayerData.instance.nailDamage;
 
         // Scale to nail
-        int fakeDmg = (int)(5 + 0.75f * Mathf.Max(nailDmg - 5, 0));
-        return 75 * fakeDmg;
+        int fakeDmg = (int)(5 + 0.5f * Mathf.Max(nailDmg - 5, 0));
+        return 90 * fakeDmg;
     }
 
     private void FixJump(FsmState state, float gravity, float y, float xScale)
