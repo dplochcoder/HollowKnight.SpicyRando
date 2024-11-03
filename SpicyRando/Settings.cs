@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace SpicyRando;
 
@@ -17,11 +17,8 @@ public class RandomizationSettings
 
 public class FeatureSettings
 {
-    public bool GitGud = false;
-    public bool SpicyBretta = false;
-    public bool Hoarder = false;
-    public bool SuperMyla = false;
+    public HashSet<string> Enabled = [];
 
     [JsonIgnore]
-    public bool IsEnabled => SpicyFeatures.All().Any(f => f.Get(this));
+    public bool IsEnabled => Enabled.Count > 0;
 }

@@ -989,17 +989,15 @@ internal static class MathExt
     }
 }
 
-internal class HoarderFeature : SpicyFeature
+internal class HoarderFeature : AbstractSpicyFeature<HoarderModule>
 {
-    public string Name => "Hoarder";
-    public string Description => "Expands the variety of Collector's jar collection";
-    public bool Get(FeatureSettings settings) => settings.Hoarder;
-    public void Set(FeatureSettings settings, bool value) => settings.Hoarder = value;
-    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
+    public override string Name => "Hoarder";
+    public override string Description => "Expands the variety of Collector's jar collection";
+    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
         lmb.DoMacroEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS + FIREBALL + SCREAM | FIREBALL>1 + SCREAM>1)"));
     }
-    public void Install()
+    public override void Install()
     {
         var mod = ItemChangerMod.Modules.Add<HoarderModule>();
         mod.ForPlando = false;

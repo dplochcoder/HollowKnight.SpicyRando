@@ -363,15 +363,12 @@ internal static class FsmExtensions
     }
 }
 
-internal class GitGudFeature : SpicyFeature
+internal class GitGudFeature : AbstractSpicyFeature<GitGudModule>
 {
-    public string Name => "Git Gud";
-    public string Description => "Makes obtaining Mothwing Cloak slightly more difficult";
-    public bool Get(FeatureSettings settings) => settings.GitGud;
-    public void Set(FeatureSettings settings, bool value) => settings.GitGud = value;
-    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
+    public override string Name => "Git Gud";
+    public override string Description => "Makes obtaining Mothwing Cloak slightly more difficult";
+    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
         lmb.DoMacroEdit(new("COMBAT[Hornet_1]", "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"));
     }
-    public void Install() => ItemChangerMod.Modules.Add<GitGudModule>();
 }

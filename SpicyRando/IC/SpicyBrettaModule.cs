@@ -331,12 +331,8 @@ internal class SpicyBrettaModule : ItemChanger.Modules.Module
     }
 }
 
-internal class SpicyBrettaFeature : SpicyFeature
+internal class SpicyBrettaFeature : AbstractSpicyFeature<SpicyBrettaModule>
 {
-    public string Name => "Spicy Bretta";
-    public string Description => "Makes rescuing Bretta slightly more difficult with claw";
-    public bool Get(FeatureSettings settings) => settings.SpicyBretta;
-    public void Set(FeatureSettings settings, bool value) => settings.SpicyBretta = value;
-    public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) { }
-    public void Install() => ItemChangerMod.Modules.Add<SpicyBrettaModule>();
+    public override string Name => "Spicy Bretta";
+    public override string Description => "Makes rescuing Bretta slightly more difficult with claw";
 }
