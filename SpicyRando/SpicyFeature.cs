@@ -10,7 +10,6 @@ internal interface SpicyFeature
 {
     public string Name { get; }
     public string Description { get; }
-    public bool Experimental();
     public bool Get(FeatureSettings settings);
     public void Set(FeatureSettings settings, bool value);
     public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb);
@@ -19,17 +18,11 @@ internal interface SpicyFeature
 
 internal static class SpicyFeatures
 {
-    private static List<SpicyFeature> ALL_FEATURES = new()
-    {
+    private static List<SpicyFeature> ALL_FEATURES = [
         new GitGudFeature(),
         new SpicyBrettaFeature(),
         new HoarderFeature(),
-        new SuperMylaFeature(),
-    };
+        new SuperMylaFeature()];
 
-    internal static IEnumerable<SpicyFeature> All()
-    {
-        bool includeExperimental = SpicyRando.Debug();
-        return ALL_FEATURES.Where(f => includeExperimental || !f.Experimental());
-    }
+    internal static IEnumerable<SpicyFeature> All() => ALL_FEATURES;
 }
