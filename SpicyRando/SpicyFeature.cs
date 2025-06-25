@@ -1,12 +1,9 @@
 ﻿using ItemChanger;
-using ItemChanger.Internal.Menu;
 using ItemChanger.Modules;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
 using SpicyRando.IC;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace SpicyRando;
 

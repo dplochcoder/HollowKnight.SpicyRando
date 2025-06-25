@@ -1,75 +1,35 @@
 ﻿using GlobalEnums;
-using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using Modding;
-using RandomizerCore.Logic;
-using RandomizerMod.Settings;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace SpicyRando.IC;
 
-internal class TraitorLordExpandedVision : MonoBehaviour
-{
-    private GameObject knight;
-    private FsmBool frontCheck;
-    private FsmBool backCheck;
-    private FsmBool walkCheck;
-
-    private void Awake()
-    {
-        knight = HeroController.instance.gameObject;
-
-        var fsm = gameObject.LocateMyFSM("Mantis");
-        var vars = fsm.FsmVariables;
-        frontCheck = vars.GetFsmBool("Front Range");
-        backCheck = vars.GetFsmBool("Back Range");
-        walkCheck = vars.GetFsmBool("Walk Range");
-    }
-
-    private const float TRAITOR_RANGE = 12;
-
-    private void Update()
-    {
-        walkCheck.Value = true;
-
-        var x = gameObject.transform.position.x;
-        var kx = knight.transform.position.x;
-        float dx = kx - x;
-
-        if (gameObject.transform.localScale.x > 0)
-        {
-            frontCheck.Value = dx >= 0 && dx <= TRAITOR_RANGE;
-            backCheck.Value = dx >= -TRAITOR_RANGE && dx <= 0;
-        }
-        else
-        {
-            frontCheck.Value = dx >= -TRAITOR_RANGE && dx <= 0;
-            backCheck.Value = dx >= 0 && dx <= TRAITOR_RANGE;
-        }
-    }
-}
-
 internal class SpicyBrettaController : MonoBehaviour
 {
+    private static readonly FsmID battleSceneId = new("Battle Scene", "Battle Control");
+
     public Scene scene;
-    private GameObject knight;
+    private GameObject? knight;
     private GameObject? mushroomRoller;
     private PlayMakerFSM? dnailFsm;
 
     private void Awake()
     {
+        Events.AddFsmEdit(battleSceneId, DisableActivation);
+        ModHooks.SetPlayerBoolHook += OverrideKilledTraitorLord;
+
         knight = HeroController.instance.gameObject;
         mushroomRoller = scene.FindGameObject("Mushroom Roller");
-
         SpawnObjects();
     }
 
-    private GameObject gate;
+    private GameObject? gate;
 
     private void SpawnObjects()
     {
@@ -112,7 +72,7 @@ internal class SpicyBrettaController : MonoBehaviour
         Spawn(pre.HiveWall, new(53.5f, 55));
         Spawn(Preloader.Instance.Belfly, new(65, 65.1f));
 
-        var squishTurret = scene.FindGameObject("Mushroom Turret");
+        var squishTurret = scene.FindGameObject("Mushroom Turret")!;
         squishTurret.transform.SetPositionX(18);
         var mawlek = Spawn(pre.BroodingMawlek, new(18, 44.2f, 2.4f));
         var mawlekCtrl = mawlek.LocateMyFSM("Mawlek Control");
@@ -186,6 +146,9 @@ internal class SpicyBrettaController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ModHooks.SetPlayerBoolHook -= OverrideKilledTraitorLord;
+        Events.RemoveFsmEdit(battleSceneId, DisableActivation);
+
         if (bossLoaded) UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("Fungus3_23_boss");
         dnailFsm?.GetState("Can Set?").RemoveFirstActionOfType<Lambda>();
     }
@@ -194,22 +157,12 @@ internal class SpicyBrettaController : MonoBehaviour
     private const float TRAITOR_X2 = 31f;
     private const float TRAITOR_Y = 6f;
 
-    private void FixTraitorLordAudio(PlayMakerFSM fsm)
+    private bool OverrideKilledTraitorLord(string name, bool value) => name == nameof(PlayerData.killedTraitorLord) ? PlayerData.instance.killedTraitorLord : value;
+
+    private void DisableActivation(PlayMakerFSM fsm)
     {
-        var audioSource = new GameObject("TraitorLordAudioSource");
-        audioSource.transform.position = new((TRAITOR_X1 + TRAITOR_X2) / 2, TRAITOR_Y);
-
-        foreach (var state in fsm.FsmStates)
-            foreach (var action in state.GetActionsOfType<AudioPlayerOneShotSingle>()) action.spawnPoint.Value ??= audioSource;
-    }
-
-    private void PatchTraitorLordSensors(GameObject traitor, PlayMakerFSM mantis)
-    {
-        traitor.FindChild("Back Range").SetActive(false);
-        traitor.FindChild("Front Range").SetActive(false);
-        traitor.FindChild("Walk Range").SetActive(false);
-
-        traitor.AddComponent<TraitorLordExpandedVision>();
+        fsm.GetState("Activated").ClearActions();
+        fsm.GetState("End Pause").ClearActions();
     }
 
     private IEnumerator LazilySpawnTraitorLord()
@@ -218,45 +171,31 @@ internal class SpicyBrettaController : MonoBehaviour
         yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Fungus3_23_boss", LoadSceneMode.Additive);
         bossLoaded = true;
 
-        GameManager.instance.LoadedBoss();
-        yield return 0;
-
         var battleScene = GameObject.Find("Battle Scene");
         battleScene.SetActive(false);
 
-        while (!IsMushroomAwake() && knight.transform.position.x > 25.5f) yield return 0;
+        while (!IsMushroomAwake() && knight!.transform.position.x > 25.5f) yield return 0;
 
-        var traitor = battleScene.FindChild("Wave 3").FindChild("Mantis Traitor Lord");
+        var traitor = battleScene.FindChild("Wave 3")!.FindChild("Mantis Traitor Lord")!;
         traitor.transform.SetParent(null);
         traitor.transform.position = new(17, 27, traitor.transform.position.z);
 
         var fsm = traitor.LocateMyFSM("Mantis");
-        FixTraitorLordAudio(fsm);
-
-        var fall = fsm.GetState("Fall");
-        fall.GetFirstActionOfType<FloatCompare>().float2.Value = TRAITOR_Y;
-        var introLand = fsm.GetState("Intro Land");
-        introLand.GetFirstActionOfType<SetPosition>().y.Value = TRAITOR_Y;
-        var roar = fsm.GetState("Roar");
-        roar.GetFirstActionOfType<SetFsmString>().setValue = "BRETTOR_LORD";
-        var land = fsm.GetState("Land");
-        land.GetFirstActionOfType<SetPosition>().y = TRAITOR_Y;
-        var deathShift = fsm.GetState("Death Shift?");
-        var compares = deathShift.GetActionsOfType<FloatCompare>();
-        compares[0].float2.Value = TRAITOR_X2;
-        compares[1].float2.Value = TRAITOR_X1;
-        var dSlash = fsm.GetState("DSlash");
-        dSlash.GetFirstActionOfType<FloatCompare>().float2.Value = TRAITOR_Y;
+        fsm.FsmVariables.GetFsmGameObject("Self").Value = traitor;
 
         var mid = (TRAITOR_X1 + TRAITOR_X2) / 2;
         fsm.GetState("Check L").GetFirstActionOfType<FloatCompare>().float2.Value = mid + 1.5f;
         fsm.GetState("Check R").GetFirstActionOfType<FloatCompare>().float2.Value = mid - 1.5f;
+        fsm.GetState("DSlash").GetFirstActionOfType<FloatCompare>().float2.Value = TRAITOR_Y;
+        fsm.GetState("Fall").GetFirstActionOfType<FloatCompare>().float2.Value = TRAITOR_Y;
+        fsm.GetState("Intro Land").GetFirstActionOfType<SetPosition>().y.Value = TRAITOR_Y;
+        fsm.GetState("Land").GetFirstActionOfType<SetPosition>().y = TRAITOR_Y;
+        fsm.GetState("Roar").GetFirstActionOfType<SetFsmString>().setValue = "BRETTOR_LORD";
 
         traitor.SetActive(true);
         fsm.SetState("Fall");
 
         while (fsm.ActiveStateName == "Fall") yield return 0;
-        PatchTraitorLordSensors(traitor, fsm);
         mushroomRoller?.GetComponent<HealthManager>().ApplyExtraDamage(999);  // Squish
 
         gate.LocateMyFSM("BG Control").SendEvent("BG CLOSE");
@@ -318,16 +257,16 @@ internal class SpicyBrettaModule : ItemChanger.Modules.Module
 
     private string SpicyBrettaHook(string key, string sheetTitle, string orig)
     {
-        switch (key)
+        return key switch
         {
-            case "BRETTOR_LORD_SUPER": return "";
-            case "BRETTOR_LORD_MAIN": return "Brettor";
-            case "BRETTOR_LORD_SUB": return "Lord";
-            case "BRETTEK_SUPER": return "Brooding";
-            case "BRETTEK_MAIN": return "Brettek";
-            case "BRETTEK_SUB": return "";
-            default: return orig;
-        }
+            "BRETTOR_LORD_SUPER" => "",
+            "BRETTOR_LORD_MAIN" => "Brettor",
+            "BRETTOR_LORD_SUB" => "Lord",
+            "BRETTEK_SUPER" => "Brooding",
+            "BRETTEK_MAIN" => "Brettek",
+            "BRETTEK_SUB" => "",
+            _ => orig,
+        };
     }
 }
 

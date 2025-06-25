@@ -3,8 +3,6 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
-using RandomizerCore.Logic;
-using RandomizerMod.Settings;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -13,9 +11,9 @@ namespace SpicyRando.IC;
 
 internal class SuperMylaController : MonoBehaviour
 {
-    public GameObject myla;
-    private GameObject knight;
-    private GameObject gate;
+    public GameObject? myla;
+    private GameObject? knight;
+    private GameObject? gate;
 
     private void Awake()
     {
@@ -33,7 +31,7 @@ internal class SuperMylaController : MonoBehaviour
     {
         if (locked) return;
 
-        if (knight.transform.position.y < 9.5f && knight.transform.position.x > 25 && myla.GetComponent<HealthManager>().hp < SuperMylaModule.MYLA_HEALTH)
+        if (knight!.transform.position.y < 9.5f && knight.transform.position.x > 25 && myla!.GetComponent<HealthManager>().hp < SuperMylaModule.MYLA_HEALTH)
         {
             locked = true;
             gate.LocateMyFSM("BG Control").SendEvent("BG CLOSE");
@@ -65,7 +63,7 @@ internal class SuperMylaModule : ItemChanger.Modules.Module
         if (!pd.GetBool(nameof(pd.hasSuperDash))) return;
 
         // Don't spawn if Myla is dead.
-        var myla = scene.FindGameObject("Zombie Myla");
+        var myla = scene.FindGameObject("Zombie Myla")!;
         var pbi = myla.GetComponent<PersistentBoolItem>();
         pbi.PreSetup();
         if (pbi.persistentBoolData.activated) return;
@@ -79,7 +77,7 @@ internal class SuperMylaModule : ItemChanger.Modules.Module
 
         myla.GetComponent<HealthManager>().hp = MYLA_HEALTH;
         myla.GetComponent<DamageHero>().damageDealt = 2;
-        myla.FindChild("Slash").GetComponent<DamageHero>().damageDealt = 4;
+        myla.FindChild("Slash")!.GetComponent<DamageHero>().damageDealt = 4;
 
         var walker = myla.GetComponent<Walker>();
         walker.walkSpeedL = -RUN_SPEED;
