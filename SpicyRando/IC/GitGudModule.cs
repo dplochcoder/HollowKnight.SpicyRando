@@ -94,7 +94,7 @@ internal class GrassAttack : MonoBehaviour
         }
     }
 
-    internal HashSet<GameObject> grassBalls = new();
+    internal HashSet<GameObject> grassBalls = [];
 
     private void OnDestroy() => grassBalls.ForEach(b => b.LocateMyFSM("grass ball control").SetState("Break"));
 

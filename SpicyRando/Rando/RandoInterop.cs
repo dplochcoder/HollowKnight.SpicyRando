@@ -36,7 +36,7 @@ internal class RandoInterop
     {
         if (!Settings.IsEnabled) return 0;
 
-        List<string> enabled = new();
+        List<string> enabled = [];
         foreach (var feature in SpicyFeatures.All()) if (feature.Get(Settings)) enabled.Add(feature.Name);
         enabled.Sort();
 

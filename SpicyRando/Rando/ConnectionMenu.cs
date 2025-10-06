@@ -53,7 +53,7 @@ internal class ConnectionMenu
 
     private IMenuElement[] CreateFeatureElements(MenuPage page)
     {
-        List<IMenuElement> list = new();
+        List<IMenuElement> list = [];
         foreach (var feature in SpicyFeatures.All())
         {
             ToggleButton button = new(page, feature.Name);

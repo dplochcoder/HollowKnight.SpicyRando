@@ -313,8 +313,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     internal static List<JarSpawnThreshold> SpawnLists()
     {
-        return new()
-        {
+        return
+        [
             new()
             {
                 spawnCounts = (new(2), new(3)),
@@ -444,7 +444,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     customHook = AdjustGodTamerBeast,
                 }
             },
-        };
+        ];
     }
 
     private List<JarSpawnThreshold> thresholds = SpawnLists();
@@ -684,7 +684,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         // Don't wait too long on spawn.
         var idle = fsm.GetState("Idle");
         var wait = idle.GetFirstActionOfType<WaitRandom>();
-        List<bool> firstWait = new() { true };
+        List<bool> firstWait = [true];
         idle.AddFirstAction(new Lambda(() =>
         {
             if (firstWait[0])
@@ -868,7 +868,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         if (!(ForPlando ?? true))
         {
-            List<bool> lunged = new() { false };
+            List<bool> lunged = [false];
             var setHops = fsm.GetState("Set Hops");
             setHops.RemoveActionsOfType<RandomInt>();
             setHops.AddLastAction(new Lambda(() => fsm.FsmVariables.GetFsmInt("Hops").Value = ChooseHops(lunged[0])));
@@ -932,7 +932,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         cursor.EmitDelegate(SpawnCustomJar);
     }
 
-    private Dictionary<GameObject, Action<GameObject>> postSpawnHooks = new();
+    private Dictionary<GameObject, Action<GameObject>> postSpawnHooks = [];
 
     internal void SetPostSpawnHook(GameObject prefab, Action<GameObject> hook) => postSpawnHooks[prefab] = hook;
 
