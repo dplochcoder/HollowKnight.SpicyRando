@@ -6,6 +6,7 @@ using Modding;
 using RandomizerMod.Menu;
 using RandoSettingsManager;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SpicyRando.Rando;
 
@@ -51,11 +52,29 @@ internal class ConnectionMenu
 
     private void SetEnabledColor() => entryButton.Text.color = Settings.IsEnabled ? Colors.TRUE_COLOR : Colors.DEFAULT_COLOR;
 
-    private IMenuElement[] CreateFeatureElements(MenuPage page)
+    private IMenuElement[] CreateFeatureElements(MenuPage page, string? category = null)
     {
+        HashSet<string> createdCategores = [];
+
         List<IMenuElement> list = [];
-        foreach (var feature in SpicyFeatures.All())
+        IEnumerable<SpicyFeature> features = category == null ? SpicyFeatures.All() : SpicyFeatures.Category(category);
+        foreach (var feature in features)
         {
+            if (category != null && feature.CategoryName != category) continue;
+            if (category == null && feature.CategoryName != null)
+            {
+                if (!createdCategores.Add(feature.CategoryName)) continue;
+
+                SmallButton categoryButton = new(page, feature.CategoryName);
+                MenuPage categoryPage = new($"Spicy Rando {feature.CategoryName}", page);
+                new VerticalItemPanel(categoryPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, SpaceParameters.VSPACE_MEDIUM, true, CreateFeatureElements(categoryPage, feature.CategoryName));
+                categoryButton.AddHideAndShowEvent(categoryPage);
+                list.Add(categoryButton);
+
+                OnRandoSettingsChanged += () => categoryButton.Text.color = features.Any(f => f.Get(Settings)) ? Colors.TRUE_COLOR : Colors.FALSE_COLOR;
+                continue;
+            }
+
             ToggleButton button = new(page, feature.Name);
             button.ValueChanged += v =>
             {
@@ -72,6 +91,6 @@ internal class ConnectionMenu
             };
             list.Add(button);
         }
-        return list.ToArray();
+        return [.. list];
     }
 }

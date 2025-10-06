@@ -1,5 +1,6 @@
 ﻿using ItemChanger;
 using ItemChanger.Modules;
+using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
 using SpicyRando.IC;
@@ -11,6 +12,7 @@ internal interface SpicyFeature
 {
     public string Name { get; }
     public string Description { get; }
+    public string? CategoryName { get; }
     public bool Get(FeatureSettings settings);
     public void Set(FeatureSettings settings, bool value);
     public void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb);
@@ -21,6 +23,7 @@ internal abstract class AbstractSpicyFeature<T> : SpicyFeature where T : Module,
 {
     public abstract string Name { get; }
     public abstract string Description { get; }
+    public virtual string? CategoryName => null;
     public bool Get(FeatureSettings settings) => settings.Enabled.Contains(Name);
     public void Set(FeatureSettings settings, bool value)
     {
@@ -37,7 +40,23 @@ internal static class SpicyFeatures
         new GitGudFeature(),
         new SpicyBrettaFeature(),
         new HoarderFeature(),
-        new SuperMylaFeature()];
+        new SuperMylaFeature()
+    ];
 
     internal static IEnumerable<SpicyFeature> All() => ALL_FEATURES;
+
+    private static Dictionary<string, List<SpicyFeature>> CreateCategories(IEnumerable<SpicyFeature> features)
+    {
+        Dictionary<string, List<SpicyFeature>> ret = [];
+        foreach (var feature in features)
+        {
+            if (feature.CategoryName == null) continue;
+            ret.GetOrAddNew(feature.CategoryName).Add(feature);
+        }
+        return ret;
+    }
+
+    private static Dictionary<string, List<SpicyFeature>> CATEGORIES = CreateCategories(ALL_FEATURES);
+
+    internal static IEnumerable<SpicyFeature> Category(string name) => CATEGORIES.GetOrDefault(name, () => []);
 }
