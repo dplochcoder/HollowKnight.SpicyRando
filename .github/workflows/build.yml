@@ -56,19 +56,11 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           path: artifacts
-      - name: Get build details
-        id: details
-        # this assumes that an MSBuild task that writes the SHA256 of the zip file to SHA.txt, and the mod version (usually
-        # the same as the assembly version) to version.txt. The contents of these files are read to step outputs for use in release
-        run: |
-          $ver = Get-Content artifacts/Publish/VERSION.txt
-          echo "buildVersion=$ver" >> $env:GITHUB_OUTPUT
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           draft: false
           generate_release_notes: true
           fail_on_unmatched_files: true
-          tag_name: v${{ steps.details.outputs.buildVersion }}
           files: |
             artifacts/Publish/SpicyRando.zip
