@@ -81,7 +81,7 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
             {
                 Name = feature.Name,
                 Description = feature.Description,
-                Values = new string[] { "Disabled", "Enabled" },
+                Values = ["Disabled", "Enabled"],
                 Saver = i => feature.Set(GS.vanillaFeatures, i == 1),
                 Loader = () => feature.Get(GS.vanillaFeatures) ? 1 : 0,
             });

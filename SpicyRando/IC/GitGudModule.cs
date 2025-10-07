@@ -3,6 +3,7 @@ using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
+using PurenailCore.CollectionUtil;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
@@ -15,7 +16,7 @@ internal class AnimationAccelerator : MonoBehaviour
 {
     private float accel = 1;
     private string? clip;
-    private tk2dSpriteAnimator animator;
+    private tk2dSpriteAnimator? animator;
 
     private void Awake() => animator = GetComponent<tk2dSpriteAnimator>();
 
@@ -27,19 +28,19 @@ internal class AnimationAccelerator : MonoBehaviour
 
     private void Update()
     {
-        if (animator.CurrentClip.name != clip)
+        if (animator?.CurrentClip.name != clip)
         {
             clip = null;
             accel = 1;
         }
-        else if (accel > 1) animator.UpdateAnimation(Time.deltaTime * (accel - 1));
+        else if (accel > 1) animator?.UpdateAnimation(Time.deltaTime * (accel - 1));
     }
 }
 
 internal class GrassBallTracker : MonoBehaviour
 {
     internal GrassAttack? parent;
-    private PlayMakerFSM fsm;
+    private PlayMakerFSM? fsm;
 
     private void Awake()
     {
@@ -48,7 +49,7 @@ internal class GrassBallTracker : MonoBehaviour
 
     private void Update()
     {
-        if (fsm.ActiveStateName == "Break" || fsm.ActiveStateName == "Recycle")
+        if (fsm?.ActiveStateName == "Break" || fsm?.ActiveStateName == "Recycle")
         {
             parent?.grassBalls.Remove(gameObject);
             Destroy(this);
@@ -64,8 +65,8 @@ internal class GrassAttack : MonoBehaviour
 
     private const float DELAY = 0.1f;
 
-    private PlayMakerFSM fsm;
-    private HealthManager health;
+    private PlayMakerFSM? fsm;
+    private HealthManager? health;
 
     private void Awake()
     {
@@ -77,7 +78,7 @@ internal class GrassAttack : MonoBehaviour
 
     private void Update()
     {
-        if (health.hp <= 0) Destroy(this);
+        if (health?.hp <= 0) Destroy(this);
 
         if (!SphereActive())
         {
@@ -98,9 +99,9 @@ internal class GrassAttack : MonoBehaviour
 
     private void OnDestroy() => grassBalls.ForEach(b => b.LocateMyFSM("grass ball control").SetState("Break"));
 
-    private bool SphereActive() => fsm.ActiveStateName == "Sphere A" || fsm.ActiveStateName == "Sphere";
+    private bool SphereActive() => fsm?.ActiveStateName == "Sphere A" || fsm?.ActiveStateName == "Sphere";
 
-    private bool Aerial() => fsm.ActiveStateName == "Sphere A";
+    private bool Aerial() => fsm?.ActiveStateName == "Sphere A";
 
     private float startAngle;
 
@@ -168,13 +169,13 @@ internal class GitGudModule : ItemChanger.Modules.Module
         vars.SetFloat("Stun Air Speed", 20);
         vars.SetFloat("Throw Speed", 65);
 
-        bool[] escalated = new[] { false };
+        Wrapped<bool> escalated = new(false);;
         fsm.GetState("Escalation").AddFirstAction(new Lambda(() =>
         {
-            if (health.hp <= newHp / 2 && !escalated[0])
+            if (health.hp <= newHp / 2 && !escalated.Value)
             {
                 // Escalate.
-                escalated[0] = true;
+                escalated.Value = true;
 
                 vars.SetFloat("Idle Wait Max", 0.3f);
                 vars.SetFloat("Idle Wait Min", 0.15f);
@@ -225,8 +226,7 @@ internal class GitGudModule : ItemChanger.Modules.Module
 
         // Fix floornet
         var floornet = fsm.AddState("Floornet");
-        var waitFloornet = new Wait();
-        waitFloornet.time = 0.1f;
+        var waitFloornet = new Wait { time = 0.1f };
         floornet.AddLastAction(waitFloornet);
         floornet.AddTransition("FINISHED", fsm.GetState("In Air"));
 
@@ -246,8 +246,7 @@ internal class GitGudModule : ItemChanger.Modules.Module
         choiceB.SetMaxMisses(4, 3, 5);
 
         var gsphereDelay = fsm.AddState("G Sphere Delay");
-        var waitGSphere = new Wait();
-        waitGSphere.time = 0.15f;
+        var waitGSphere = new Wait { time = 0.15f };
         gsphereDelay.AddLastAction(waitGSphere);
         gsphereDelay.AddTransition("FINISHED", "Sphere Antic G");
 

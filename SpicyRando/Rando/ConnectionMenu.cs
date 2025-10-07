@@ -71,7 +71,7 @@ internal class ConnectionMenu
                 categoryButton.AddHideAndShowEvent(categoryPage);
                 list.Add(categoryButton);
 
-                OnRandoSettingsChanged += () => categoryButton.Text.color = features.Any(f => f.Get(Settings)) ? Colors.TRUE_COLOR : Colors.FALSE_COLOR;
+                OnRandoSettingsChanged += () => categoryButton.Text.color = features.Any(f => f.Get(Settings)) ? Colors.TRUE_COLOR : Colors.DEFAULT_COLOR;
                 continue;
             }
 

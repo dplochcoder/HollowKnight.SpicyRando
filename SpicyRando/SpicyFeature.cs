@@ -36,11 +36,18 @@ internal abstract class AbstractSpicyFeature<T> : SpicyFeature where T : Module,
 
 internal static class SpicyFeatures
 {
-    private static List<SpicyFeature> ALL_FEATURES = [
+    private static readonly List<SpicyFeature> ALL_FEATURES = [
         new GitGudFeature(),
         new SpicyBrettaFeature(),
+        new SuperMylaFeature(),
+        new ElderHuFeature(),
+        new GalienFeature(),
+        new GorbFeature(),
+        new MarkothFeature(),
+        new MarmuFeature(),
+        new NoEyesFeature(),
+        new XeroFeature(),
         new HoarderFeature(),
-        new SuperMylaFeature()
     ];
 
     internal static IEnumerable<SpicyFeature> All() => ALL_FEATURES;
@@ -56,7 +63,7 @@ internal static class SpicyFeatures
         return ret;
     }
 
-    private static Dictionary<string, List<SpicyFeature>> CATEGORIES = CreateCategories(ALL_FEATURES);
+    private static readonly Dictionary<string, List<SpicyFeature>> CATEGORIES = CreateCategories(ALL_FEATURES);
 
     internal static IEnumerable<SpicyFeature> Category(string name) => CATEGORIES.GetOrDefault(name, () => []);
 }

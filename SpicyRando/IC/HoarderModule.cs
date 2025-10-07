@@ -802,8 +802,10 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
     private static void BroadcastAll(PlayMakerFSM fsm, string eventName)
     {
-        FsmEventTarget target = new();
-        target.target = FsmEventTarget.EventTarget.BroadcastAll;
+        FsmEventTarget target = new()
+        {
+            target = FsmEventTarget.EventTarget.BroadcastAll
+        };
         fsm.Fsm.Event(target, eventName);
     }
 
