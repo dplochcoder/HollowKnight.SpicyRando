@@ -24,13 +24,15 @@ internal class ConnectionMenu
 
     private static bool TryGetMenuButton(MenuPage page, out SmallButton button)
     {
-        button = Instance.entryButton;
-        return true;
+#pragma warning disable CS8601 // Possible null reference assignment.
+        button = Instance?.entryButton;
+#pragma warning restore CS8601 // Possible null reference assignment.
+        return button != null;
     }
 
     private static void HookRandoSettingsManager() => RandoSettingsManagerMod.Instance.RegisterConnection(new SettingsProxy());
 
-    private SmallButton entryButton;
+    private readonly SmallButton entryButton;
 
     private event System.Action? OnRandoSettingsChanged;
 
@@ -45,7 +47,7 @@ internal class ConnectionMenu
         entryButton.AddHideAndShowEvent(spicyRandoPage);
 
         OnRandoSettingsChanged += SetEnabledColor;
-        new VerticalItemPanel(spicyRandoPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, SpaceParameters.VSPACE_MEDIUM, true, CreateFeatureElements(spicyRandoPage));
+        VerticalItemPanel panel = new(spicyRandoPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, SpaceParameters.VSPACE_MEDIUM, true, CreateFeatureElements(spicyRandoPage));
 
         OnRandoSettingsChanged?.Invoke();
     }
@@ -67,7 +69,7 @@ internal class ConnectionMenu
 
                 SmallButton categoryButton = new(page, feature.CategoryName);
                 MenuPage categoryPage = new($"Spicy Rando {feature.CategoryName}", page);
-                new VerticalItemPanel(categoryPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, SpaceParameters.VSPACE_MEDIUM, true, CreateFeatureElements(categoryPage, feature.CategoryName));
+                VerticalItemPanel panel = new(categoryPage, SpaceParameters.TOP_CENTER_UNDER_TITLE, SpaceParameters.VSPACE_MEDIUM, true, CreateFeatureElements(categoryPage, feature.CategoryName));
                 categoryButton.AddHideAndShowEvent(categoryPage);
                 list.Add(categoryButton);
 

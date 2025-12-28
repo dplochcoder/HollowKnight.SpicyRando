@@ -237,8 +237,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
             if (yBump != 0) obj.transform.SetPositionY(obj.transform.position.y + yBump);
             if (yVelBump != 0 || rXVelBump != 0)
             {
-                var r2d = obj.GetComponent<Rigidbody2D>();
-                r2d.velocity += new Vector2(rXVelBump * UnityEngine.Random.Range(-1f, 1f), yVelBump);
+                var rb2d = obj.GetComponent<Rigidbody2D>();
+                rb2d.velocity += new Vector2(rXVelBump * UnityEngine.Random.Range(-1f, 1f), yVelBump);
             }
             obj.AddComponent<EnemyCleanup>().index = index;
 
@@ -447,14 +447,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
         ];
     }
 
-    private List<JarSpawnThreshold> thresholds = SpawnLists();
-    private FsmInt phase2hp = new(0);
+    private readonly List<JarSpawnThreshold> thresholds = SpawnLists();
+    private readonly FsmInt phase2hp = new(0);
     private HoarderModule? mod;
     private bool plando;
     private bool initialized = false;
 
-    private HealthManager healthManager;
-    private PlayMakerFSM collectorFsm;
+    private HealthManager? healthManager;
+    private PlayMakerFSM? collectorFsm;
     private JarSpawnThreshold? currentThreshold;
 
     internal void SetMod(HoarderModule module, bool plando)
@@ -480,7 +480,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         {
             collectorFsm.GetState("Summon?").AddFirstAction(new Lambda(() =>
             {
-                blockMultiSummon = currentThreshold.GetIndex() >= 3 && (GameObject.FindGameObjectsWithTag("Boss")?.Length ?? 0) >= 2;
+                blockMultiSummon = currentThreshold!.GetIndex() >= 3 && (GameObject.FindGameObjectsWithTag("Boss")?.Length ?? 0) >= 2;
             }));
             collectorFsm.GetState("Resummon?").AddFirstAction(new Lambda(() =>
             {
@@ -507,7 +507,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     internal FsmInt Phase2Hp() => phase2hp;
 
-    private JarSpawnThreshold? GetCurrentThreshold() => thresholds.Where(t => t.hpThreshold <= healthManager.hp).FirstOrDefault();
+    private JarSpawnThreshold? GetCurrentThreshold() => thresholds.Where(t => t.hpThreshold <= healthManager!.hp).FirstOrDefault();
 
     private void Update()
     {
@@ -517,7 +517,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
         if (next != null && next.hpThreshold != (currentThreshold?.hpThreshold ?? -1))
         {
             currentThreshold = next;
-            currentThreshold.Apply(collectorFsm, this, mod);
+            currentThreshold.Apply(collectorFsm!, this, mod!);
 
             // Don't allow hoarding of easy enemies.
             JarSpawnThreshold.CleanupIndex(currentThreshold.GetIndex() - 2);
@@ -543,12 +543,12 @@ internal class JarSpawnAdjuster : MonoBehaviour
         state.InsertAction(new Lambda(() => AdjustJumpVelocity(r2d, dampener)), index);
     }
 
-    private static void AdjustJumpVelocity(Rigidbody2D r2d, float dampener)
+    private static void AdjustJumpVelocity(Rigidbody2D rb2d, float dampener)
     {
-        var vel = r2d.velocity;
-        vel.x /= dampener;
-        vel.y *= Mathf.Sqrt(dampener);
-        r2d.velocity = vel;
+        var v = rb2d.velocity;
+        v.x /= dampener;
+        v.y *= Mathf.Sqrt(dampener);
+        rb2d.velocity = v;
     }
 
     private static void CancelNailScaling(GameObject obj)
@@ -625,10 +625,10 @@ internal class JarSpawnAdjuster : MonoBehaviour
         // Create an arena to hold Nosk
         var arena = new GameObject("Nosk Arena");
 
-        var roofDust = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Roof Dust"));
+        var roofDust = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Roof Dust")!);
         roofDust.transform.position = new((X1 + X2) / 2, 105, 0);
         roofDust.transform.SetParent(arena.transform, true);
-        var globDropper = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Glob Dropper"));
+        var globDropper = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Glob Dropper")!);
         globDropper.transform.SetParent(arena.transform, true);
 
         var fsm = obj.LocateMyFSM("Hornet Nosk");
@@ -934,7 +934,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
         cursor.EmitDelegate(SpawnCustomJar);
     }
 
-    private Dictionary<GameObject, Action<GameObject>> postSpawnHooks = [];
+    private readonly Dictionary<GameObject, Action<GameObject>> postSpawnHooks = [];
 
     internal void SetPostSpawnHook(GameObject prefab, Action<GameObject> hook) => postSpawnHooks[prefab] = hook;
 
