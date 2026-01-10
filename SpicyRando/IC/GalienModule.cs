@@ -4,7 +4,6 @@ using ItemChanger.Extensions;
 using PurenailCore.CollectionUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using SFCore.Utils;
 using SpicyRando.Util;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,13 +25,13 @@ internal class GalienModule : AbstractGhostWarriorModule
         var hammer = obj.transform.parent.Find("Galien Hammer")!.gameObject;
 
         var summonFsm = obj.LocateMyFSM("Summon Minis");
-        summonFsm.GetFsmState("Idle").ClearTransitions();
+        summonFsm.GetState("Idle").ClearTransitions();
 
         var summonParticles = summonFsm.FsmVariables.GetFsmGameObject("Summon Pt").Value.GetComponent<ParticleSystem>();
         var attackParticles = summonFsm.FsmVariables.GetFsmGameObject("Attack Pt").Value.GetComponent<ParticleSystem>();
-        var summonCry = summonFsm.GetFsmState("Summon Antic").GetFirstActionOfType<AudioPlayerOneShot>();
-        var summonWhoosh = summonFsm.GetFsmState("Summon").GetFirstActionOfType<AudioPlayerOneShotSingle>();
-        var miniHammerTemplate = summonFsm.GetFsmState("Summon").GetFirstActionOfType<CreateObject>().gameObject.Value;
+        var summonCry = summonFsm.GetState("Summon Antic").GetFirstActionOfType<AudioPlayerOneShot>();
+        var summonWhoosh = summonFsm.GetState("Summon").GetFirstActionOfType<AudioPlayerOneShotSingle>();
+        var miniHammerTemplate = summonFsm.GetState("Summon").GetFirstActionOfType<CreateObject>().gameObject.Value;
 
         IEnumerator Summon(System.Action creator)
         {
@@ -63,7 +62,7 @@ internal class GalienModule : AbstractGhostWarriorModule
             newHammer.Value = Object.Instantiate(hammer, obj.transform.position, Quaternion.Euler(0, 0, -180));
 
             var controlFsm = newHammer.Value.LocateMyFSM("Control");
-            var emerge = controlFsm.GetFsmState("Emerge");
+            var emerge = controlFsm.GetState("Emerge");
             emerge.GetFirstActionOfType<iTweenRotateTo>().time = 1f;
             emerge.GetFirstActionOfType<iTweenMoveTo>().time = 1f;
 
@@ -116,7 +115,7 @@ internal class GalienModule : AbstractGhostWarriorModule
 
             Wrapped<bool> thirdHammer = new(false);
             yield return new WaitUntil(() => UpdatePhase(fsm, baseHp, thirdHammer, 1f / 7f));
-            yield return fsm.StartCoroutine(SummonHammer([hammer, secondHammerObj.Value], new(null)));
+            yield return fsm.StartCoroutine(SummonHammer([hammer, secondHammerObj.Value!], new(null)));
         }
         fsm.StartCoroutine(DoSummons());
     }

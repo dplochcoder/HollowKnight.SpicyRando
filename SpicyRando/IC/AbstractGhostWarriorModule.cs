@@ -2,7 +2,6 @@
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using PurenailCore.CollectionUtil;
-using SFCore.Utils;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -31,7 +30,7 @@ internal abstract class AbstractGhostWarriorModule : ItemChanger.Modules.Module
             var hp = healthFsmVars.GetFsmInt($"Level {i}");
             hp.Value = Mathf.CeilToInt(hp.Value * 3);
 
-            healthFsm.GetFsmState($"Set {i}").AddLastAction(new Lambda(() => baseHp.Value = hp.Value));
+            healthFsm.GetState($"Set {i}").AddLastAction(new Lambda(() => baseHp.Value = hp.Value));
         }
 
         ModifyGhostWarrior(fsm, baseHp);

@@ -7,7 +7,6 @@ using PurenailCore.CollectionUtil;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using SFCore.Utils;
 using SpicyRando.Util;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,23 +26,23 @@ internal class ElderHuModule : AbstractGhostWarriorModule
 
     private void SetSpeed(PlayMakerFSM fsm, float speed, float ringDelay, float ringSpeedup)
     {
-        fsm.gameObject.LocateMyFSM("Movement").GetFsmState("Hover").GetFirstActionOfType<ChaseObject>().speedMax = speed;
-        fsm.GetFsmState("Ring Antic").GetFirstActionOfType<Wait>().time = ringDelay;
+        fsm.gameObject.LocateMyFSM("Movement").GetState("Hover").GetFirstActionOfType<ChaseObject>().speedMax = speed;
+        fsm.GetState("Ring Antic").GetFirstActionOfType<Wait>().time = ringDelay;
 
         var accel = fsm.gameObject.GetOrAddComponent<AnimationAccelerator>();
         foreach (var ringFsm in GetAllRings(fsm))
         {
-            ringFsm.GetFsmState("Antic").AccelerateAnimation(accel, ringSpeedup);
-            ringFsm.GetFsmState("Antic 2").AccelerateAnimation(accel, ringSpeedup);
-            ringFsm.GetFsmState("Down").GetFirstActionOfType<SetVelocity2d>().y = ringSpeedup * -60f;
-            ringFsm.GetFsmState("Land").AccelerateAnimation(accel, ringSpeedup);
-            ringFsm.GetFsmState("Land 2").AccelerateAnimation(accel, ringSpeedup);
+            ringFsm.GetState("Antic").AccelerateAnimation(accel, ringSpeedup);
+            ringFsm.GetState("Antic 2").AccelerateAnimation(accel, ringSpeedup);
+            ringFsm.GetState("Down").GetFirstActionOfType<SetVelocity2d>().y = ringSpeedup * -60f;
+            ringFsm.GetState("Land").AccelerateAnimation(accel, ringSpeedup);
+            ringFsm.GetState("Land 2").AccelerateAnimation(accel, ringSpeedup);
         }
     }
 
     private void SetWait(PlayMakerFSM fsm, float min, float max)
     {
-        var waitAction = fsm.GetFsmState("Wait").GetFirstActionOfType<WaitRandom>();
+        var waitAction = fsm.GetState("Wait").GetFirstActionOfType<WaitRandom>();
         waitAction.timeMin = min;
         waitAction.timeMax = max;
     }
@@ -58,15 +57,15 @@ internal class ElderHuModule : AbstractGhostWarriorModule
 
     private void PlayRingSounds(PlayMakerFSM fsm, float volume = 1)
     {
-        fsm.GetFsmState("Ring Antic").GetFirstActionOfType<AudioPlayerOneShotSingle>().DoPlayRandomClip(volume);
-        fsm.gameObject.DoAfter(() => fsm.GetFsmState("Attack").GetFirstActionOfType<AudioPlayerOneShotSingle>().DoPlayRandomClip(volume), 0.5f);
+        fsm.GetState("Ring Antic").GetFirstActionOfType<AudioPlayerOneShotSingle>().DoPlayRandomClip(volume);
+        fsm.gameObject.DoAfter(() => fsm.GetState("Attack").GetFirstActionOfType<AudioPlayerOneShotSingle>().DoPlayRandomClip(volume), 0.5f);
     }
 
     private void PlayMegaRingSounds(PlayMakerFSM fsm, float delay)
     {
         fsm.gameObject.DoAfter(() =>
         {
-            foreach (var action in fsm.GetFsmState("M 1").GetActionsOfType<AudioPlayerOneShotSingle>()) action.DoPlayRandomClip();
+            foreach (var action in fsm.GetState("M 1").GetActionsOfType<AudioPlayerOneShotSingle>()) action.DoPlayRandomClip();
         }, delay);
     }
 
@@ -113,17 +112,17 @@ internal class ElderHuModule : AbstractGhostWarriorModule
 
     protected override void ModifyGhostWarrior(PlayMakerFSM fsm, Wrapped<int> baseHP)
     {
-        var phaseState = fsm.GetFsmState("Place Rings");
+        var phaseState = fsm.GetState("Place Rings");
         phaseState.ClearTransitions();
-        phaseState.AddFsmTransition("ATTACK", "Ring Antic");
-        phaseState.AddFsmTransition("MEGA", "Mega Warp Out");
+        phaseState.AddTransition("ATTACK", "Ring Antic");
+        phaseState.AddTransition("MEGA", "Mega Warp Out");
 
         Wrapped<bool> phase2 = new(false);
         Wrapped<bool> phase3 = new(false);
         Wrapped<int> skippedMegas = new(0);
         Wrapped<bool> didShadeDodge = new(false);
         Wrapped<List<PlayMakerFSM>> alts = new([]);
-        fsm.GetFsmState("Place Rings").AddLastAction(new Lambda(() =>
+        fsm.GetState("Place Rings").AddLastAction(new Lambda(() =>
         {
             if (UpdatePhase(fsm, baseHP, phase2, 0.75f))
             {
@@ -142,7 +141,7 @@ internal class ElderHuModule : AbstractGhostWarriorModule
                 {
                     int a = phase3.Value ? 2 : (phase2.Value ? (Random.Range(0, 3) == 0 ? 1 : 2) : Random.Range(1, 3));
                     int b = Random.Range(1, 7);
-                    ExecuteAttack(fsm.GetFsmState($"{a} {b}"));
+                    ExecuteAttack(fsm.GetState($"{a} {b}"));
                 }
                 else ExecuteSpecialAttack(fsm, didShadeDodge);
 
@@ -156,9 +155,9 @@ internal class ElderHuModule : AbstractGhostWarriorModule
             }
         }));
 
-        var megaState = fsm.GetFsmState("Mega Warp Out");
+        var megaState = fsm.GetState("Mega Warp Out");
         megaState.ClearTransitions();
-        megaState.AddFsmTransition("MEGA DONE", "Warp In");
+        megaState.AddTransition("MEGA DONE", "Warp In");
         megaState.AddLastAction(new Lambda(() =>
         {
             List<PlayMakerFSM> controls = [.. GetAllRings(fsm)];

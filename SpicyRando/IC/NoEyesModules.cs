@@ -1,12 +1,11 @@
-﻿using ItemChanger.FsmStateActions;
+﻿using HutongGames.PlayMaker.Actions;
+using ItemChanger.Extensions;
+using ItemChanger.FsmStateActions;
 using ItemChanger;
 using PurenailCore.CollectionUtil;
-using SFCore.Utils;
-using UnityEngine;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using ItemChanger.Extensions;
-using HutongGames.PlayMaker.Actions;
+using UnityEngine;
 
 namespace SpicyRando.IC;
 
@@ -19,28 +18,28 @@ internal class NoEyesModule : AbstractGhostWarriorModule
         Object.Destroy(fsm.gameObject.LocateMyFSM("Escalation"));
 
         var shotSpawnFsm = fsm.gameObject.LocateMyFSM("Shot Spawn");
-        var shot = shotSpawnFsm.GetFsmState("Spawn L").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
+        var shot = shotSpawnFsm.GetState("Spawn L").GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
 
-        void FixSpawnShot(GameObject obj)
+        static void FixSpawnShot(GameObject obj)
         {
             var control = obj.LocateMyFSM("Control");
             if (control.ActiveStateName == "Travel") control.SetState("Init");
         }
 
-        shotSpawnFsm.GetFsmState("Spawn L").InsertFsmAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 4);
-        shotSpawnFsm.GetFsmState("Spawn L").InsertFsmAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 9);
-        shotSpawnFsm.GetFsmState("Spawn R").InsertFsmAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 4);
-        shotSpawnFsm.GetFsmState("Spawn R").InsertFsmAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 9);
+        shotSpawnFsm.GetState("Spawn L").InsertAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 4);
+        shotSpawnFsm.GetState("Spawn L").InsertAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 9);
+        shotSpawnFsm.GetState("Spawn R").InsertAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 4);
+        shotSpawnFsm.GetState("Spawn R").InsertAction(new Lambda(() => FixSpawnShot(shotSpawnFsm.FsmVariables.GetFsmGameObject("Shot").Value)), 9);
 
         Wrapped<bool> noEscape = new(false);
-        fsm.GetFsmState("Decide").AddFirstAction(new Lambda(() =>
+        fsm.GetState("Decide").AddFirstAction(new Lambda(() =>
         {
             if (UpdatePhase(fsm, baseHp, noEscape, 0.5f))
             {
-                shotSpawnFsm.GetFsmState("Spawn L").GetActionsOfType<RandomFloat>()[1].min.Value = -1f;
-                shotSpawnFsm.GetFsmState("Spawn R").GetActionsOfType<RandomFloat>()[1].min.Value = -1f;
+                shotSpawnFsm.GetState("Spawn L").GetActionsOfType<RandomFloat>()[1].min.Value = -1f;
+                shotSpawnFsm.GetState("Spawn R").GetActionsOfType<RandomFloat>()[1].min.Value = -1f;
 
-                fsm.GetFsmState("Send").AddFirstAction(new Lambda(() =>
+                fsm.GetState("Send").AddFirstAction(new Lambda(() =>
                 {
                     for (int i = 0; i < 6; i++)
                     {
@@ -57,9 +56,9 @@ internal class NoEyesModule : AbstractGhostWarriorModule
             float pct = 1 - (fsm.gameObject.GetComponent<HealthManager>().hp * 1f / baseHp.Value);
 
             float warpProb = 0.35f + pct * 0.4f;
-            fsm.GetFsmState("Decide").GetFirstActionOfType<SendRandomEvent>().weights = [1 - warpProb, warpProb];
+            fsm.GetState("Decide").GetFirstActionOfType<SendRandomEvent>().weights = [1 - warpProb, warpProb];
 
-            var warpWait = fsm.gameObject.LocateMyFSM("Movement").GetFsmState("Hover").GetFirstActionOfType<WaitRandom>();
+            var warpWait = fsm.gameObject.LocateMyFSM("Movement").GetState("Hover").GetFirstActionOfType<WaitRandom>();
             warpWait.timeMin = 3.5f - pct * 2.25f;
             warpWait.timeMax = 5f - pct * 3f;
 

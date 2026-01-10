@@ -6,7 +6,6 @@ using ItemChanger.FsmStateActions;
 using PurenailCore.CollectionUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using SFCore.Utils;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -18,9 +17,8 @@ internal class MarkothModule : AbstractGhostWarriorModule
     private void SetupSpawnShield(FsmState state, string name, GameObject src, Quaternion rot, Vector3 target)
     {
         var fsm = state.Fsm.FsmComponent;
-        var objVar = fsm.AddFsmGameObjectVariable(name);
         var obj = Object.Instantiate(src);
-        objVar.Value = obj;
+        var objVar = fsm.AddFsmGameObject(name, obj);
 
         obj.transform.SetParent(fsm.gameObject.transform);
         obj.name = name;
@@ -63,7 +61,7 @@ internal class MarkothModule : AbstractGhostWarriorModule
 
         Object.Destroy(obj.LocateMyFSM("Rage Check"));
 
-        var waitState = fsm.GetFsmState("Wait");
+        var waitState = fsm.GetState("Wait");
         waitState.RemoveActionsOfType<BoolTest>();
         var waitAction = waitState.GetFirstActionOfType<WaitRandom>();
         void SetNailWait(float min, float max)
@@ -75,28 +73,28 @@ internal class MarkothModule : AbstractGhostWarriorModule
 
         void UpdateAttackStop()
         {
-            var state = fsm.GetFsmState("Attack Stop");
-            state.AddFsmTransition("SKIP", "Wait");
+            var state = fsm.GetState("Attack Stop");
+            state.AddTransition("SKIP", "Wait");
             state.AddFirstAction(new Lambda(() =>
             {
                 SetNailWait(1f, 2f);
                 fsm.SendEvent("SKIP");
             }));
 
-            var newState = fsm.AddFsmState("Attack Resume");
-            newState.AddFsmTransition("RESUME WAIT", "Wait");
+            var newState = fsm.AddState("Attack Resume");
+            newState.AddTransition("RESUME WAIT", "Wait");
             newState.AddFirstAction(new Lambda(() =>
             {
                 SetPhase3NailWait();
                 fsm.SendEvent("RESUME WAIT");
             }));
-            fsm.AddGlobalTransition("ATTACK OK", "Attack Resume");
+            SFCore.Utils.FsmUtil.AddGlobalTransition(fsm, "ATTACK OK", "Attack Resume");
         }
 
         void SetSpeed(float speed, float accel)
         {
             var movementFsm = obj.LocateMyFSM("Movement");
-            var chase = movementFsm.GetFsmState("Hover").GetFirstActionOfType<ChaseObject>();
+            var chase = movementFsm.GetState("Hover").GetFirstActionOfType<ChaseObject>();
             chase.speedMax = speed;
             chase.acceleration = accel;
         }
@@ -104,34 +102,34 @@ internal class MarkothModule : AbstractGhostWarriorModule
         Wrapped<GameObject> shieldTemplate = new(new());
 
         var shieldAttackFsm = obj.LocateMyFSM("Shield Attack");
-        var rage2 = shieldAttackFsm.AddFsmBoolVariable("Rage 2");
-        var rage2Shield = shieldAttackFsm.AddFsmBoolVariable("Rage 2 Shield");
-        shieldAttackFsm.GetFsmState("Idle").AddFirstAction(new LambdaEveryFrame(() =>
+        var rage2 = shieldAttackFsm.AddFsmBool("Rage 2", false);
+        var rage2Shield = shieldAttackFsm.AddFsmBool("Rage 2 Shield", false);
+        shieldAttackFsm.GetState("Idle").AddFirstAction(new LambdaEveryFrame(() =>
         {
             if (!rage2.Value || rage2Shield.Value) return;
             rage2Shield.Value = true;
 
             var summonShieldFsm = shieldAttackFsm.FsmVariables.GetFsmGameObject("Shield 1").Value.LocateMyFSM("Summon Shield");
             var shieldControlFsm = summonShieldFsm.gameObject.LocateMyFSM("Control");
-            var summonState = summonShieldFsm.GetFsmState("Summon");
-            var summonState2 = summonShieldFsm.AddFsmState("Summon 2");
-            summonState.AddFsmTransition("SUMMON SHIELD 2", "Summon 2");
+            var summonState = summonShieldFsm.GetState("Summon");
+            var summonState2 = summonShieldFsm.AddState("Summon 2");
+            summonState.AddTransition("SUMMON SHIELD 2", "Summon 2");
 
             SetupSpawnShield(summonState2, "Shield 3", shieldTemplate.Value, Quaternion.Euler(0, 0, -90), new(0, 4.05f, 0));
             SetupSpawnShield(summonState2, "Shield 4", shieldTemplate.Value, Quaternion.Euler(0, 0, 90), new(0, -4.05f, 0));
             summonState2.AddLastAction(new Lambda(() =>
             {
-                CopyITween(shieldControlFsm.GetFsmState("Tween Out"), shieldControlFsm.FsmVariables.GetFsmGameObject("Shield 2"));
-                CopyITween(shieldControlFsm.GetFsmState("Tween In"), shieldControlFsm.FsmVariables.GetFsmGameObject("Shield 2"));
+                CopyITween(shieldControlFsm.GetState("Tween Out"), shieldControlFsm.FsmVariables.GetFsmGameObject("Shield 2"));
+                CopyITween(shieldControlFsm.GetState("Tween In"), shieldControlFsm.FsmVariables.GetFsmGameObject("Shield 2"));
             }));
 
-            shieldAttackFsm.GetFsmState("Send Summon").GetFirstActionOfType<SendEventByName>().sendEvent.Value = "SUMMON SHIELD 2";
+            shieldAttackFsm.GetState("Send Summon").GetFirstActionOfType<SendEventByName>().sendEvent.Value = "SUMMON SHIELD 2";
             shieldAttackFsm.SendEvent("RAGE");
         }));
 
         void SetShieldWait(float min, float max)
         {
-            var waitState = shieldAttackFsm.GetFsmState("Idle").GetFirstActionOfType<WaitRandom>();
+            var waitState = shieldAttackFsm.GetState("Idle").GetFirstActionOfType<WaitRandom>();
             waitState.timeMin = min;
             waitState.timeMax = max;
         }

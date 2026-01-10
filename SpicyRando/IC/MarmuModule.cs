@@ -5,7 +5,6 @@ using ItemChanger.FsmStateActions;
 using PurenailCore.CollectionUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using SFCore.Utils;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -49,7 +48,7 @@ internal class MarmuModule : AbstractGhostWarriorModule
         {
             unrollTime.Value = antic;
 
-            var anticState = fsm.GetFsmState("Antic");
+            var anticState = fsm.GetState("Antic");
             var rollTime = anticState.GetFirstActionOfType<RandomFloat>();
             rollTime.min = minRoll;
             rollTime.max = maxRoll;
@@ -61,8 +60,8 @@ internal class MarmuModule : AbstractGhostWarriorModule
         {
             if (self == objectBounce)
             {
-                self.SetAttr("velocity", -collision.relativeVelocity);
-                self.SetAttr("speed", collision.relativeVelocity.magnitude);
+                SFCore.Utils.Util.SetAttr(self, "velocity", -collision.relativeVelocity);
+                SFCore.Utils.Util.SetAttr(self, "speed", collision.relativeVelocity.magnitude);
             }
 
             orig(self, collision);
@@ -90,15 +89,15 @@ internal class MarmuModule : AbstractGhostWarriorModule
         {
             speedMultiplier.Value = multiplier;
 
-            fsm.GetFsmState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 20 * multiplier;
+            fsm.GetState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 20 * multiplier;
 
-            var chase = fsm.GetFsmState("Chase").GetFirstActionOfType<ChaseObjectV2>();
+            var chase = fsm.GetState("Chase").GetFirstActionOfType<ChaseObjectV2>();
             chase.speedMax = 40 * multiplier;
             chase.accelerationForce = 85 * multiplier * Mathf.Sqrt(multiplier);
 
             void FixHitVelocity(string name, float? x, float? y)
             {
-                var state = fsm.GetFsmState(name);
+                var state = fsm.GetState(name);
                 state.RemoveActionsOfType<SetVelocity2d>();
                 state.AddLastAction(new Lambda(() => AdjustVelocity(x, y)));
             }
@@ -108,32 +107,32 @@ internal class MarmuModule : AbstractGhostWarriorModule
             FixHitVelocity("Hit Right", 40, 15);
             FixHitVelocity("Hit Up", null, 50);
 
-            var audio = fsm.GetFsmState("Hit Voice").GetFirstActionOfType<AudioPlayerOneShot>();
+            var audio = fsm.GetState("Hit Voice").GetFirstActionOfType<AudioPlayerOneShot>();
             audio.pitchMin = multiplier;
             audio.pitchMax = multiplier;
         }
 
-        var uHitDown = fsm.AddFsmState("U Hit Down");
-        uHitDown.AddFsmTransition("FINISHED", "Unroll");
+        var uHitDown = fsm.AddState("U Hit Down");
+        uHitDown.AddTransition("FINISHED", "Unroll");
         uHitDown.AddLastAction(new Lambda(() => AdjustVelocity(null, -40)));
-        var uHitLeft = fsm.AddFsmState("U Hit Left");
-        uHitLeft.AddFsmTransition("FINISHED", "Unroll");
+        var uHitLeft = fsm.AddState("U Hit Left");
+        uHitLeft.AddTransition("FINISHED", "Unroll");
         uHitLeft.AddLastAction(new Lambda(() => AdjustVelocity(-40, 15)));
-        var uHitRight = fsm.AddFsmState("U Hit Right");
-        uHitRight.AddFsmTransition("FINISHED", "Unroll");
+        var uHitRight = fsm.AddState("U Hit Right");
+        uHitRight.AddTransition("FINISHED", "Unroll");
         uHitRight.AddLastAction(new Lambda(() => AdjustVelocity(40, 15)));
-        var uHitUp = fsm.AddFsmState("U Hit Up");
-        uHitUp.AddFsmTransition("FINISHED", "Unroll");
+        var uHitUp = fsm.AddState("U Hit Up");
+        uHitUp.AddTransition("FINISHED", "Unroll");
         uHitUp.AddLastAction(new Lambda(() => AdjustVelocity(null, 50)));
 
         // Fix Marmu hit response
-        var unrollState = fsm.GetFsmState("Unroll");
+        var unrollState = fsm.GetState("Unroll");
         unrollState.ClearTransitions();
-        unrollState.AddFsmTransition("HIT DOWN", "U Hit Down");
-        unrollState.AddFsmTransition("HIT LEFT", "U Hit Left");
-        unrollState.AddFsmTransition("HIT RIGHT", "U Hit Right");
-        unrollState.AddFsmTransition("HIT UP", "U Hit Up");
-        unrollState.AddFsmTransition("UNROLL WARP", "Warp?");
+        unrollState.AddTransition("HIT DOWN", "U Hit Down");
+        unrollState.AddTransition("HIT LEFT", "U Hit Left");
+        unrollState.AddTransition("HIT RIGHT", "U Hit Right");
+        unrollState.AddTransition("HIT UP", "U Hit Up");
+        unrollState.AddTransition("UNROLL WARP", "Warp?");
         unrollState.RemoveActionsOfType<Wait>();
         unrollState.AddLastAction(new Lambda(() => unrollTimer.Value = 0));
         unrollState.AddLastAction(new LambdaEveryFrame(() =>
@@ -146,7 +145,7 @@ internal class MarmuModule : AbstractGhostWarriorModule
         Wrapped<bool> phase3 = new(false);
         Wrapped<bool> phase4 = new(false);
         Wrapped<bool> phase5 = new(false);
-        fsm.GetFsmState("Antic").AddFirstAction(new Lambda(() =>
+        fsm.GetState("Antic").AddFirstAction(new Lambda(() =>
         {
             if (UpdatePhase(fsm, baseHp, phase2, 0.8f))
             {

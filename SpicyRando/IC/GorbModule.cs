@@ -1,18 +1,17 @@
-﻿using ItemChanger.FsmStateActions;
+﻿using HutongGames.PlayMaker.Actions;
+using HutongGames.PlayMaker;
+using ItemChanger.Extensions;
+using ItemChanger.FsmStateActions;
 using ItemChanger;
 using PurenailCore.CollectionUtil;
-using SFCore.Utils;
-using UnityEngine;
+using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using HutongGames.PlayMaker.Actions;
-using ItemChanger.Extensions;
+using UnityEngine;
 using SpicyRando.Util;
-using System.Linq;
-using HutongGames.PlayMaker;
 using System.Collections;
 using System.Collections.Generic;
-using PurenailCore.SystemUtil;
+using System.Linq;
 
 namespace SpicyRando.IC;
 
@@ -34,18 +33,18 @@ internal class GorbModule : AbstractGhostWarriorModule
             var obj = template.Spawn(src.gameObject.transform.position, Quaternion.Euler(0, 0, angle));
 
             var control = obj.LocateMyFSM("Control");
-            var poke = control.GetFsmState("Poke Out");
+            var poke = control.GetState("Poke Out");
             poke.GetFirstActionOfType<SetVelocityAsAngle>().speed = 30 * speedup;
             poke.GetFirstActionOfType<DecelerateV2>().deceleration = 0.88f * Mathf.Pow(speedup, 0.02f);
             poke.GetFirstActionOfType<Wait>().time = 0.5f / speedup;
-            control.GetFsmState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 25 * speedup;
+            control.GetState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 25 * speedup;
 
-            control.GetFsmState("Recycle").AddFirstAction(new Lambda(() =>
+            control.GetState("Recycle").AddFirstAction(new Lambda(() =>
             {
                 poke.GetFirstActionOfType<SetVelocityAsAngle>().speed = 30;
                 poke.GetFirstActionOfType<DecelerateV2>().deceleration = 0.88f;
                 poke.GetFirstActionOfType<Wait>().time = 0.5f;
-                control.GetFsmState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 25;
+                control.GetState("Fire").GetFirstActionOfType<SetVelocityAsAngle>().speed = 25;
             }));
 
             obj.SetActive(true);
@@ -57,33 +56,33 @@ internal class GorbModule : AbstractGhostWarriorModule
     {
         void SetSpeeds(float waitMin, float waitMax, float damagedWait, float attackSpeedup, float recoverWait)
         {
-            var wait = fsm.GetFsmState("Wait").GetFirstActionOfType<WaitRandom>();
+            var wait = fsm.GetState("Wait").GetFirstActionOfType<WaitRandom>();
             wait.timeMin = waitMin;
             wait.timeMax = waitMax;
 
-            fsm.GetFsmState("Damaged").GetFirstActionOfType<Wait>().time = damagedWait;
-            fsm.GetFsmState("Recover").GetFirstActionOfType<Wait>().time = recoverWait;
+            fsm.GetState("Damaged").GetFirstActionOfType<Wait>().time = damagedWait;
+            fsm.GetState("Recover").GetFirstActionOfType<Wait>().time = recoverWait;
 
             var accel = fsm.gameObject.GetOrAddComponent<AnimationAccelerator>();
-            fsm.GetFsmState("Antic").AccelerateAnimation(accel, attackSpeedup);
-            fsm.GetFsmState("Attack").AccelerateAnimation(accel, attackSpeedup);
+            fsm.GetState("Antic").AccelerateAnimation(accel, attackSpeedup);
+            fsm.GetState("Attack").AccelerateAnimation(accel, attackSpeedup);
         }
 
         var movementFsm = fsm.gameObject.LocateMyFSM("Movement");
         void SetMoveSpeeds(float speed, float accel, float warpChance, float warpDelay)
         {
-            var chase = movementFsm.GetFsmState("Hover").GetFirstActionOfType<ChaseObject>();
+            var chase = movementFsm.GetState("Hover").GetFirstActionOfType<ChaseObject>();
             chase.speedMax = speed;
             chase.acceleration = accel;
 
-            var warpState = movementFsm.GetFsmState("Warp Check");
+            var warpState = movementFsm.GetState("Warp Check");
             warpState.GetFirstActionOfType<SendRandomEvent>().weights = [1 - warpChance, warpChance];
             warpState.GetFirstActionOfType<Wait>().time = warpDelay;
         }
 
-        var attackState = fsm.GetFsmState("Attack");
+        var attackState = fsm.GetState("Attack");
         attackState.ClearTransitions();
-        attackState.AddFsmTransition("DONE", "Recover");
+        attackState.AddTransition("DONE", "Recover");
         attackState.GetFirstActionOfType<Tk2dPlayAnimationWithEvents>().animationCompleteEvent = FsmEvent.GetFsmEvent("");
         var spear = attackState.GetFirstActionOfType<SpawnObjectFromGlobalPool>().gameObject.Value;
         attackState.Actions = [.. attackState.Actions.Take(5)];
@@ -98,7 +97,7 @@ internal class GorbModule : AbstractGhostWarriorModule
         Wrapped<bool> phase4 = new(false);
         Wrapped<int> alt1 = new(0);
         Wrapped<int> alt2 = new(0);
-        fsm.GetFsmState("Wait").AddFirstAction(new Lambda(() =>
+        fsm.GetState("Wait").AddFirstAction(new Lambda(() =>
         {
             if (UpdatePhase(fsm, baseHp, phase2, 0.8f))
             {
@@ -123,7 +122,7 @@ internal class GorbModule : AbstractGhostWarriorModule
             }
         }));
 
-        var audio = fsm.GetFsmState("Double").GetFirstActionOfType<AudioPlayerOneShotSingle>();
+        var audio = fsm.GetState("Double").GetFirstActionOfType<AudioPlayerOneShotSingle>();
 
         float Offset(int count, int reps) => 360f / (count * reps);
         attackState.AddLastAction(new Lambda(() =>

@@ -7,7 +7,6 @@ using PurenailCore.CollectionUtil;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using SFCore.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -35,7 +34,7 @@ internal class XeroModule : AbstractGhostWarriorModule
         newSword.transform.SetParent(obj.transform);
         newSword.transform.position = newHome.transform.position;
 
-        fsm.AddGameObjectVariable($"Sword {newNum}").Value = newSword;
+        fsm.AddFsmGameObject($"Sword {newNum}", newSword);
         newSword.LocateMyFSM("xero_nail").FsmVariables.GetFsmString("Home Name").Value = newHome.name;
     }
 
@@ -65,7 +64,7 @@ internal class XeroModule : AbstractGhostWarriorModule
         var movementFsm = obj.LocateMyFSM("Movement");
         void SetSpeed(float speed, float accel, float minChange, float maxChange)
         {
-            var hoverState = movementFsm.GetFsmState("Hover");
+            var hoverState = movementFsm.GetState("Hover");
 
             var chase = hoverState.GetFirstActionOfType<ChaseObjectV2>();
             chase.speedMax = speed;
@@ -76,9 +75,9 @@ internal class XeroModule : AbstractGhostWarriorModule
             wait.timeMax = maxChange;
         }
 
-        var waitState = fsm.GetFsmState("Wait");
+        var waitState = fsm.GetState("Wait");
         waitState.RemoveActionsOfType<BoolTest>();
-        var recoverState = fsm.GetFsmState("Recover");
+        var recoverState = fsm.GetState("Recover");
         void SetWait(float min, float max, float recover)
         {
             var wait = waitState.GetFirstActionOfType<WaitRandom>();
@@ -88,13 +87,13 @@ internal class XeroModule : AbstractGhostWarriorModule
             recoverState.GetFirstActionOfType<Wait>().time = recover;
         }
 
-        fsm.GetFsmState("Check Hero Pos").AddFirstAction(new NextFrameEvent() { sendEvent = FsmEvent.GetFsmEvent("FINISHED") });
+        fsm.GetState("Check Hero Pos").AddFirstAction(new NextFrameEvent() { sendEvent = FsmEvent.GetFsmEvent("FINISHED") });
 
-        var anticState = fsm.GetFsmState("Antic");
+        var anticState = fsm.GetState("Antic");
         anticState.ClearTransitions();
-        anticState.AddFsmTransition("CANCEL", "Check Hero Pos");
-        anticState.AddFsmTransition("SHOOT", "Recover");
-        anticState.AddFsmTransition("SUMMON", "Summon Antic");
+        anticState.AddTransition("CANCEL", "Check Hero Pos");
+        anticState.AddTransition("SHOOT", "Recover");
+        anticState.AddTransition("SUMMON", "Summon Antic");
 
         anticState.RemoveActionsOfType<BoolTestMulti>();
         anticState.RemoveActionsOfType<BoolTest>();
@@ -103,7 +102,7 @@ internal class XeroModule : AbstractGhostWarriorModule
         anticState.RemoveActionsOfType<Wait>();
 
         Wrapped<List<int>> swordSummons = new([]);
-        var summonState = fsm.GetFsmState("Summon");
+        var summonState = fsm.GetState("Summon");
         summonState.RemoveActionsOfType<ActivateGameObject>();
         summonState.AddLastAction(new Lambda(() =>
         {
@@ -112,7 +111,7 @@ internal class XeroModule : AbstractGhostWarriorModule
 
         void SummonSwords(float antic, float wait, List<int> toSummon)
         {
-            fsm.GetFsmState("Summon Antic").GetFirstActionOfType<Wait>().time = antic;
+            fsm.GetState("Summon Antic").GetFirstActionOfType<Wait>().time = antic;
             summonState.GetFirstActionOfType<Wait>().time = wait;
             swordSummons.Value = toSummon;
         }
