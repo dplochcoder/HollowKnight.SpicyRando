@@ -13,7 +13,7 @@ namespace SpicyRando;
 public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 {
     public static SpicyRando? Instance { get; private set; }
-    public static GlobalSettings GS { get; private set; } = new();
+    public static GlobalSettings? GS { get; private set; }
 
     public SpicyRando() : base("Spicy Rando") { Instance = this; }
 

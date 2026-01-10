@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Extensions;
 using RandomizerMod.Logging;
@@ -47,7 +48,7 @@ internal class RandoInterop
     {
         tw.WriteLine("Spicy Rando Settings:");
         using JsonTextWriter jtw = new(tw) { CloseOutput = false };
-        RandomizerCore.Json.JsonUtil.GetNonLogicSerializer().Serialize(jtw, SpicyRando.GS.randoSettings);
+        JsonUtil<SpicyRando>.Serialize(SpicyRando.GS.randoSettings, jtw);
         tw.WriteLine();
     }
 }

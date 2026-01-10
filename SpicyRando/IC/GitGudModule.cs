@@ -119,9 +119,9 @@ internal class GrassAttack : MonoBehaviour
         ball.SetActive(true);
 
         grassBalls.Add(ball);
-        var rigid = ball.GetComponent<Rigidbody2D>();
-        rigid.velocity = vec * LaunchSpeed;
-        rigid.gravityScale = GravityScale;
+        var rb2d = ball.GetComponent<Rigidbody2D>();
+        rb2d.velocity = vec * LaunchSpeed;
+        rb2d.gravityScale = GravityScale;
     }
 }
 
@@ -270,7 +270,7 @@ internal class GitGudModule : ItemChanger.Modules.Module
         ret.GetFirstActionOfType<DecelerateV2>().deceleration = 0.6f;
     }
 
-    private int BuffHitpoints()
+    private static int BuffHitpoints()
     {
         int nailDmg = PlayerData.instance.nailDamage;
 
@@ -279,7 +279,7 @@ internal class GitGudModule : ItemChanger.Modules.Module
         return 90 * fakeDmg;
     }
 
-    private void FixJump(FsmState state, float gravity, float y, float xScale)
+    private static void FixJump(FsmState state, float gravity, float y, float xScale)
     {
         state.RemoveActionsOfType<NextFrameEvent>();
 
@@ -291,21 +291,14 @@ internal class GitGudModule : ItemChanger.Modules.Module
         }
         g.gravityScale = gravity;
 
-        var r2d = state.Fsm.Owner.gameObject.GetComponent<Rigidbody2D>();
-        state.AddLastAction(new Lambda(() =>
-        {
-            var orig = r2d.velocity;
-            var newx = orig.x * xScale;
-            if (newx > 25) newx = 25;
-            if (newx < -25) newx = -25;
-            r2d.velocity = new(newx, y);
-        }));
+        var rb2d = state.Fsm.Owner.gameObject.GetComponent<Rigidbody2D>();
+        state.AddLastAction(new Lambda(() => rb2d.velocity = new(MathExt.Mid(-25, rb2d.velocity.x * xScale, 25), y)));
     }
 
     private const float QUICK_PROB = 0.65f;
     private const float QUICK_XRANGE = 2.5f;
 
-    private void MaybeQuickGSphere(PlayMakerFSM fsm)
+    private static void MaybeQuickGSphere(PlayMakerFSM fsm)
     {
         if (Random.Range(0f, 1f) > QUICK_PROB) return;
 
