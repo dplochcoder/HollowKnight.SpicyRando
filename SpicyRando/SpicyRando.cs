@@ -13,7 +13,7 @@ namespace SpicyRando;
 public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 {
     public static SpicyRando? Instance { get; private set; }
-    public static GlobalSettings? GS { get; private set; }
+    public static GlobalSettings? GS { get; private set; } = new();
 
     public SpicyRando() : base("Spicy Rando") { Instance = this; }
 
@@ -68,7 +68,7 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 
     public void OnLoadGlobal(GlobalSettings s) => GS = s ?? new();
 
-    public GlobalSettings OnSaveGlobal() => GS;
+    public GlobalSettings OnSaveGlobal() => GS ?? new();
 
     public bool ToggleButtonInsideMenu => false;
 
