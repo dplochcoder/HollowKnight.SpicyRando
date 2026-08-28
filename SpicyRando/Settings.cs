@@ -5,13 +5,13 @@ namespace SpicyRando;
 
 public class GlobalSettings
 {
-    public FeatureSettings vanillaFeatures = new();
-    public RandomizationSettings randoSettings = new();
+    public FeatureSettings VanillaFeatures = new();
+    public RandomizationSettings RandoSettings = new();
 }
 
 public class RandomizationSettings
 {
-    public FeatureSettings features = new();
+    public FeatureSettings Features = new();
 }
 
 public class FeatureSettings

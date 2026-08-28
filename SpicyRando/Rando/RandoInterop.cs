@@ -21,7 +21,7 @@ internal class RandoInterop
         ConnectionMenu.Hook();
     }
 
-    private static FeatureSettings Settings => SpicyRando.GS.randoSettings.features;
+    private static FeatureSettings Settings => SpicyRando.GS.RandoSettings.Features;
 
     private static void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
@@ -55,7 +55,7 @@ internal class RandoInterop
     {
         tw.WriteLine("Spicy Rando Settings:");
         using JsonTextWriter jtw = new(tw) { CloseOutput = false };
-        JsonUtil<SpicyRando>.Serialize(SpicyRando.GS.randoSettings, jtw);
+        JsonUtil<SpicyRando>.Serialize(SpicyRando.GS.RandoSettings, jtw);
         tw.WriteLine();
     }
 }

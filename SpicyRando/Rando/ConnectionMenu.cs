@@ -19,6 +19,8 @@ internal class ConnectionMenu
         RandomizerMenuAPI.AddMenuPage(page => Instance = new(page), TryGetMenuButton);
         MenuChangerMod.OnExitMainMenu += () => Instance = null;
 
+        if (ModHooks.GetMod("ConnectionSettingsRando") is Mod)
+            HookConnectionSettingsRando();
         if (ModHooks.GetMod("RandoSettingsManager") is Mod)
             HookRandoSettingsManager();
     }
@@ -31,6 +33,8 @@ internal class ConnectionMenu
         return button != null;
     }
 
+    private static void HookConnectionSettingsRando() => CSRInterop.Setup();
+
     private static void HookRandoSettingsManager() =>
         RandoSettingsManagerMod.Instance.RegisterConnection(new SettingsProxy());
 
@@ -40,7 +44,7 @@ internal class ConnectionMenu
 
     internal void InvokeOnRandoSettingsChanged() => OnRandoSettingsChanged?.Invoke();
 
-    private static FeatureSettings Settings => SpicyRando.GS.randoSettings.features;
+    private static FeatureSettings Settings => SpicyRando.GS.RandoSettings.Features;
 
     private ConnectionMenu(MenuPage connectionsPage)
     {

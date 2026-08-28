@@ -8,6 +8,12 @@ Spicy Rando features can be enabled in rando. Some of them alter logic to accoun
 
 Spicy Rando is integrated with Rando Settings Manager for easy sharing of settings as well.
 
+## CSR Integration
+
+Spicy Rando integrates with ConnectionSettingsRando and can be enabled randomly on a per-feature basis.
+
+Individual features can be filtered from CSR via the path `SpicyRando.Features.#FEATURE_NAME#`.
+
 ## Features
 
 ### The Hoarder
@@ -33,3 +39,7 @@ Does not alter logic.
 Enabling this feature makes obtaining Mothwing Cloak slightly more difficult.
 
 Alters logic requirements for the Hornet 1 fight.
+
+### Nightmare Warriors
+
+Every dream warrior has a 'nightmare' setting for a harder, longer fight, with more HP and advanced attacks.

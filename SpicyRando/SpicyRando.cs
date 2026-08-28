@@ -13,13 +13,9 @@ namespace SpicyRando;
 public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
 {
     public static SpicyRando? Instance { get; private set; }
-    public static GlobalSettings? GS { get; private set; } = new();
+    public static GlobalSettings GS { get; private set; } = new();
 
-    public SpicyRando()
-        : base("Spicy Rando")
-    {
-        Instance = this;
-    }
+    public SpicyRando() => Instance = this;
 
     private static readonly string Version = VersionUtil.ComputeVersion<SpicyRando>();
 
@@ -63,7 +59,7 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
         {
             foreach (var feature in SpicyFeatures.All())
             {
-                if (feature.Get(GS.vanillaFeatures))
+                if (feature.Get(GS.VanillaFeatures))
                 {
                     ItemChangerMod.CreateSettingsProfile(false);
                     feature.Install();
@@ -97,8 +93,8 @@ public class SpicyRando : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod
                     Name = feature.Name,
                     Description = feature.Description,
                     Values = ["Disabled", "Enabled"],
-                    Saver = i => feature.Set(GS.vanillaFeatures, i == 1),
-                    Loader = () => feature.Get(GS.vanillaFeatures) ? 1 : 0,
+                    Saver = i => feature.Set(GS.VanillaFeatures, i == 1),
+                    Loader = () => feature.Get(GS.VanillaFeatures) ? 1 : 0,
                 }
             );
         }

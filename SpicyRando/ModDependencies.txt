@@ -6,3 +6,4 @@ Randomizer 4
 RandoSettingsManager
 RandomizerCore
 SFCore
+ConnectionSettingsRando
