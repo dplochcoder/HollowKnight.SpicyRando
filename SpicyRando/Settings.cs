@@ -12,7 +12,6 @@ public class GlobalSettings
 public class RandomizationSettings
 {
     public FeatureSettings features = new();
-    // TODO: Logic and other things
 }
 
 public class FeatureSettings
