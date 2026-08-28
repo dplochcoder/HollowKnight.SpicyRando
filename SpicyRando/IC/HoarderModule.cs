@@ -1,4 +1,9 @@
-﻿using HutongGames.PlayMaker;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
@@ -9,11 +14,6 @@ using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -61,7 +61,8 @@ internal abstract class CorpseAdjuster : MonoBehaviour
     private void Update()
     {
         var fsm = gameObject.FindChild(childName)?.LocateMyFSM(fsmName);
-        if (fsm == null) return;
+        if (fsm == null)
+            return;
 
         AdjustCorpse(fsm);
         Destroy(this);
@@ -123,7 +124,8 @@ internal class WatcherKnightCorpseAdjuster : CorpseAdjuster
         shatter.RemoveActionsOfType<SendEventByName>();
         shatter.GetFirstActionOfType<Wait>().time = 0.1f;
 
-        fsm.GetState("Final").AddLastAction(new Lambda(() => fsm.gameObject.AddComponent<CorpseFader>()));
+        fsm.GetState("Final")
+            .AddLastAction(new Lambda(() => fsm.gameObject.AddComponent<CorpseFader>()));
     }
 }
 
@@ -135,12 +137,14 @@ internal class MarmuCorpseAdjuster : CorpseAdjuster
 
         var blow = fsm.GetState("Blow");
         blow.RemoveActionsOfType<AudioPlaySimple>();
-        blow.AddFirstAction(new Lambda(() =>
-        {
-            var fader = fsm.gameObject.AddComponent<CorpseFader>();
-            fader.lingerTime = 0.25f;
-            fader.fadeTime = 1f;
-        }));
+        blow.AddFirstAction(
+            new Lambda(() =>
+            {
+                var fader = fsm.gameObject.AddComponent<CorpseFader>();
+                fader.lingerTime = 0.25f;
+                fader.fadeTime = 1f;
+            })
+        );
         blow.GetFirstActionOfType<Wait>().time = 1.05f;
 
         var end = fsm.GetState("End");
@@ -176,8 +180,10 @@ internal class ZFixer : MonoBehaviour
         if (z > TARGET)
         {
             float newZ = z - drift * Time.deltaTime;
-            if (newZ <= TARGET) transform.SetPositionZ(TARGET);
-            else transform.SetPositionZ(newZ);
+            if (newZ <= TARGET)
+                transform.SetPositionZ(TARGET);
+            else
+                transform.SetPositionZ(newZ);
         }
     }
 }
@@ -204,7 +210,8 @@ internal class StatSelector<T>
         this.plando = plando;
     }
 
-    internal StatSelector(T singular) : this(singular, singular) { }
+    internal StatSelector(T singular)
+        : this(singular, singular) { }
 
     internal T Get(bool plando) => plando ? this.plando : this.main;
 }
@@ -234,11 +241,15 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
         private void PostSpawnHooks(GameObject obj)
         {
-            if (yBump != 0) obj.transform.SetPositionY(obj.transform.position.y + yBump);
+            if (yBump != 0)
+                obj.transform.SetPositionY(obj.transform.position.y + yBump);
             if (yVelBump != 0 || rXVelBump != 0)
             {
                 var rb2d = obj.GetComponent<Rigidbody2D>();
-                rb2d.velocity += new Vector2(rXVelBump * UnityEngine.Random.Range(-1f, 1f), yVelBump);
+                rb2d.velocity += new Vector2(
+                    rXVelBump * UnityEngine.Random.Range(-1f, 1f),
+                    yVelBump
+                );
             }
             obj.AddComponent<EnemyCleanup>().index = index;
 
@@ -281,6 +292,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
     internal record JarSpawnThreshold
     {
         internal static event Action<int>? OnCleanupIndex;
+
         internal static void CleanupIndex(int index) => OnCleanupIndex?.Invoke(index);
 
         internal (StatSelector<int>, StatSelector<int>) spawnCounts;
@@ -326,18 +338,14 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     yBump = 0.25f,
                     yVelBump = 0.25f,
                 },
-                spawn2 = new()
-                {
-                    spawner = () => Preloader.Instance.Baldur,
-                    hp = new(15),
-                },
+                spawn2 = new() { spawner = () => Preloader.Instance.Baldur, hp = new(15) },
                 spawn3 = new()
                 {
                     spawner = () => Preloader.Instance.Squit,
                     hp = new(8),
                     yBump = 0.25f,
                     yVelBump = 0.25f,
-                }
+                },
             },
             new()
             {
@@ -364,7 +372,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     yVelBump = 2,
                     rXVelBump = 2,
                     customHook = AdjustBlobble,
-                }
+                },
             },
             new()
             {
@@ -390,7 +398,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     spawner = () => Preloader.Instance.GreatHopper,
                     hp = new(60, 85),
                     yBump = 1.5f,
-                }
+                },
             },
             new()
             {
@@ -416,7 +424,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     hp = new(90, 105),
                     yBump = 1.5f,
                     customHook = AdjustWatcherKnight,
-                }
+                },
             },
             new()
             {
@@ -442,7 +450,7 @@ internal class JarSpawnAdjuster : MonoBehaviour
                     hp = new(110, 120),
                     yBump = 2.5f,
                     customHook = AdjustGodTamerBeast,
-                }
+                },
             },
         ];
     }
@@ -469,8 +477,10 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     private bool MaybeInit()
     {
-        if (initialized) return true;
-        if (mod == null) return false;
+        if (initialized)
+            return true;
+        if (mod == null)
+            return false;
 
         initialized = true;
         healthManager = GetComponent<HealthManager>();
@@ -478,14 +488,25 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
         if (!plando)
         {
-            collectorFsm.GetState("Summon?").AddFirstAction(new Lambda(() =>
-            {
-                blockMultiSummon = currentThreshold!.GetIndex() >= 3 && (GameObject.FindGameObjectsWithTag("Boss")?.Length ?? 0) >= 2;
-            }));
-            collectorFsm.GetState("Resummon?").AddFirstAction(new Lambda(() =>
-            {
-                if (blockMultiSummon) collectorFsm.SendEvent("END");
-            }));
+            collectorFsm
+                .GetState("Summon?")
+                .AddFirstAction(
+                    new Lambda(() =>
+                    {
+                        blockMultiSummon =
+                            currentThreshold!.GetIndex() >= 3
+                            && (GameObject.FindGameObjectsWithTag("Boss")?.Length ?? 0) >= 2;
+                    })
+                );
+            collectorFsm
+                .GetState("Resummon?")
+                .AddFirstAction(
+                    new Lambda(() =>
+                    {
+                        if (blockMultiSummon)
+                            collectorFsm.SendEvent("END");
+                    })
+                );
         }
 
         int total = 0;
@@ -503,15 +524,18 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     private const int STARTING_THRESHOLD = 0;
 
-    internal int CollectorHp() => Select(thresholds[STARTING_THRESHOLD].hpSize) + thresholds[STARTING_THRESHOLD].hpThreshold;
+    internal int CollectorHp() =>
+        Select(thresholds[STARTING_THRESHOLD].hpSize) + thresholds[STARTING_THRESHOLD].hpThreshold;
 
     internal FsmInt Phase2Hp() => phase2hp;
 
-    private JarSpawnThreshold? GetCurrentThreshold() => thresholds.Where(t => t.hpThreshold <= healthManager!.hp).FirstOrDefault();
+    private JarSpawnThreshold? GetCurrentThreshold() =>
+        thresholds.Where(t => t.hpThreshold <= healthManager!.hp).FirstOrDefault();
 
     private void Update()
     {
-        if (!MaybeInit()) return;
+        if (!MaybeInit())
+            return;
 
         var next = GetCurrentThreshold();
         if (next != null && next.hpThreshold != (currentThreshold?.hpThreshold ?? -1))
@@ -529,7 +553,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
         }
     }
 
-    private static void AdjustCorpse<C>(GameObject obj, string childName, string fsmName) where C : CorpseAdjuster
+    private static void AdjustCorpse<C>(GameObject obj, string childName, string fsmName)
+        where C : CorpseAdjuster
     {
         var corpseAdjuster = obj.AddComponent<C>();
         corpseAdjuster.childName = childName;
@@ -554,7 +579,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
     private static void CancelNailScaling(GameObject obj)
     {
         var scaleFsm = obj.LocateMyFSM("FSM");
-        for (int i = 1; i <= 5; i++) scaleFsm.GetState($"Set {i}").RemoveActionsOfType<SetHP>();
+        for (int i = 1; i <= 5; i++)
+            scaleFsm.GetState($"Set {i}").RemoveActionsOfType<SetHP>();
     }
 
     private const float X1 = 40;
@@ -562,7 +588,8 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     private static void AdjustBlobble(GameObject obj) => obj.AddComponent<BlobbleCorpseAdjuster>();
 
-    private static void AdjustFlukeFey(GameObject obj) => obj.LocateMyFSM("Fluke Fly").FsmVariables.GetFsmBool("FLUKE MOTHER").Value = true;
+    private static void AdjustFlukeFey(GameObject obj) =>
+        obj.LocateMyFSM("Fluke Fly").FsmVariables.GetFsmBool("FLUKE MOTHER").Value = true;
 
     private const float MAWLEK_SCALE = 0.85f;
     private const float MAWLEK_BUFFER = 6;
@@ -573,7 +600,10 @@ internal class JarSpawnAdjuster : MonoBehaviour
         Vector3 scale = new(MAWLEK_SCALE, MAWLEK_SCALE, MAWLEK_SCALE);
         obj.transform.localScale = scale;
 
-        obj.FindChild("Mawlek Head").LocateMyFSM("Mawlek Head").FsmVariables.GetFsmFloat("Shot Speed").Value = 23;
+        obj.FindChild("Mawlek Head")
+            .LocateMyFSM("Mawlek Head")
+            .FsmVariables.GetFsmFloat("Shot Speed")
+            .Value = 23;
 
         var fsm = obj.LocateMyFSM("Mawlek Control");
 
@@ -589,13 +619,19 @@ internal class JarSpawnAdjuster : MonoBehaviour
         init.AddLastAction(new Lambda(() => fsm.SetState("Wake In Air")));
 
         var wakeLand = fsm.GetState("Wake Land");
-        wakeLand.AddLastAction(new Lambda(() =>
-        {
-            fsm.FsmVariables.GetFsmFloat("Start X").Value = MathExt.Mid(obj.transform.position.x, X1 + MAWLEK_BUFFER, X2 - MAWLEK_BUFFER);
-            obj.transform.localScale = scale;
-            fsm.SetState("Start");
-            fsm.gameObject.AddComponent<AddDamageHero>();
-        }));
+        wakeLand.AddLastAction(
+            new Lambda(() =>
+            {
+                fsm.FsmVariables.GetFsmFloat("Start X").Value = MathExt.Mid(
+                    obj.transform.position.x,
+                    X1 + MAWLEK_BUFFER,
+                    X2 - MAWLEK_BUFFER
+                );
+                obj.transform.localScale = scale;
+                fsm.SetState("Start");
+                fsm.gameObject.AddComponent<AddDamageHero>();
+            })
+        );
 
         var r2d = obj.GetComponent<Rigidbody2D>();
         AdjustJumpState(r2d, fsm.GetState("Jump"), MAWLEK_JUMP_DAMPENER);
@@ -628,7 +664,9 @@ internal class JarSpawnAdjuster : MonoBehaviour
         var roofDust = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Roof Dust")!);
         roofDust.transform.position = new((X1 + X2) / 2, 105, 0);
         roofDust.transform.SetParent(arena.transform, true);
-        var globDropper = Instantiate(Preloader.Instance.WingedNoskArena.FindChild("Glob Dropper")!);
+        var globDropper = Instantiate(
+            Preloader.Instance.WingedNoskArena.FindChild("Glob Dropper")!
+        );
         globDropper.transform.SetParent(arena.transform, true);
 
         var fsm = obj.LocateMyFSM("Hornet Nosk");
@@ -652,15 +690,18 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
         fsm.GetState("Choose Attack").RemoveFirstActionOfType<IntCompare>();
 
-        fsm.GetState("Swoop L").GetFirstActionOfType<FloatCompare>().float2.Value = X1 + NOSK_X_SWOOP_BUFFER;
-        fsm.GetState("Swoop R").GetFirstActionOfType<FloatCompare>().float2.Value = X2 - NOSK_X_SWOOP_BUFFER;
+        fsm.GetState("Swoop L").GetFirstActionOfType<FloatCompare>().float2.Value =
+            X1 + NOSK_X_SWOOP_BUFFER;
+        fsm.GetState("Swoop R").GetFirstActionOfType<FloatCompare>().float2.Value =
+            X2 - NOSK_X_SWOOP_BUFFER;
 
         fsm.GetState("Init Velocity").GetFirstActionOfType<Wait>().time = 0.25f;
 
         fsm.GetState("Shift Down?").GetFirstActionOfType<FloatCompare>().float2.Value = NOSK_Y_MAX;
 
         // Nerf the spit attack
-        for (int i = 1; i <= 3; i++) NerfNoskSpitAttack(fsm.GetState($"Spit {i}"));
+        for (int i = 1; i <= 3; i++)
+            NerfNoskSpitAttack(fsm.GetState($"Spit {i}"));
         fsm.GetState("Spit 3").AddLastAction(new Lambda(() => fsm.SetState("Acid Roar End")));
 
         obj.transform.SetParent(arena.transform, true);
@@ -685,22 +726,28 @@ internal class JarSpawnAdjuster : MonoBehaviour
         var idle = fsm.GetState("Idle");
         var wait = idle.GetFirstActionOfType<WaitRandom>();
         List<bool> firstWait = [true];
-        idle.AddFirstAction(new Lambda(() =>
-        {
-            if (firstWait[0])
+        idle.AddFirstAction(
+            new Lambda(() =>
             {
-                firstWait[0] = false;
-                wait.timeMin.Value = 0.25f;
-                wait.timeMax.Value = 0.25f;
-            }
-            else
-            {
-                wait.timeMin.Value = 0.35f;
-                wait.timeMax.Value = 0.75f;
-            }
-        }));
+                if (firstWait[0])
+                {
+                    firstWait[0] = false;
+                    wait.timeMin.Value = 0.25f;
+                    wait.timeMax.Value = 0.25f;
+                }
+                else
+                {
+                    wait.timeMin.Value = 0.35f;
+                    wait.timeMax.Value = 0.75f;
+                }
+            })
+        );
 
-        AdjustJumpState(obj.GetComponent<Rigidbody2D>(), fsm.GetState("RC Launch"), BEAST_LAUNCH_DAMPENER);
+        AdjustJumpState(
+            obj.GetComponent<Rigidbody2D>(),
+            fsm.GetState("RC Launch"),
+            BEAST_LAUNCH_DAMPENER
+        );
 
         AdjustCorpse<InfectedCorpseAdjuster>(obj, "Corpse Lobster(Clone)", "Death");
     }
@@ -743,11 +790,15 @@ internal class JarSpawnAdjuster : MonoBehaviour
 
     private static void AdjustWatcherKnight(GameObject obj)
     {
-        obj.transform.localScale = new(WATCHER_KNIGHT_SCALE, WATCHER_KNIGHT_SCALE, WATCHER_KNIGHT_SCALE);
+        obj.transform.localScale = new(
+            WATCHER_KNIGHT_SCALE,
+            WATCHER_KNIGHT_SCALE,
+            WATCHER_KNIGHT_SCALE
+        );
 
         var fsm = obj.LocateMyFSM("Black Knight");
         fsm.FsmVariables.GetFsmFloat("Charge Speed").Value = 23.5f;
-        
+
         fsm.GetState("Rest").AddFirstAction(new Lambda(() => fsm.SetState("Roar Start")));
 
         var roarStart = fsm.GetState("Roar Start");
@@ -787,7 +838,12 @@ internal class HoarderModule : ItemChanger.Modules.Module
         Events.AddFsmEdit(CONTROL, ModifyCollectorFight);
         Events.AddFsmEdit(PHASE_CONTROL, BuffPhaseControl);
         Events.AddFsmEdit(STUN_CONTROL, EliminateStunControl);
-        spawnHook = new(typeof(SpawnJarControl).GetMethod("Behaviour", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget(), HookSpawnCustomJar);
+        spawnHook = new(
+            typeof(SpawnJarControl)
+                .GetMethod("Behaviour", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetStateMachineTarget(),
+            HookSpawnCustomJar
+        );
         ModHooks.LanguageGetHook += LanguageGetHook;
     }
 
@@ -802,10 +858,7 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
     private static void BroadcastAll(PlayMakerFSM fsm, string eventName)
     {
-        FsmEventTarget target = new()
-        {
-            target = FsmEventTarget.EventTarget.BroadcastAll
-        };
+        FsmEventTarget target = new() { target = FsmEventTarget.EventTarget.BroadcastAll };
         fsm.Fsm.Event(target, eventName);
     }
 
@@ -818,10 +871,14 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         fsm.GetState("Destroy").RemoveActionsOfType<DestroySelf>();
         fsm.GetState("Quick Open").AddFirstAction(new Lambda(() => fsm.SetState("Close 2")));
-        fsm.GetState("Open").AddFirstAction(new Lambda(() =>
-        {
-            if (!fsm.FsmVariables.GetFsmBool("REALLY OPEN").Value) fsm.SetState("Close 2");
-        }));
+        fsm.GetState("Open")
+            .AddFirstAction(
+                new Lambda(() =>
+                {
+                    if (!fsm.FsmVariables.GetFsmBool("REALLY OPEN").Value)
+                        fsm.SetState("Close 2");
+                })
+            );
     }
 
     private static void ReallyOpen(GameObject gate)
@@ -834,12 +891,16 @@ internal class HoarderModule : ItemChanger.Modules.Module
     private static int ChooseHops(bool lunged)
     {
         var c = UnityEngine.Random.Range(0f, 1f);
-        if (lunged) return c < 0.5f ? 1 : 2;
+        if (lunged)
+            return c < 0.5f ? 1 : 2;
         else
         {
-            if (c < 0.25f) return 1;
-            else if (c < 0.75f) return 2;
-            else return 3;
+            if (c < 0.25f)
+                return 1;
+            else if (c < 0.75f)
+                return 2;
+            else
+                return 3;
         }
     }
 
@@ -866,24 +927,33 @@ internal class HoarderModule : ItemChanger.Modules.Module
         // Adapt hp.
         var healthManager = fsm.gameObject.GetComponent<HealthManager>();
 
-        fsm.GetState("Start Fall").AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
+        fsm.GetState("Start Fall")
+            .AddFirstAction(new Lambda(() => healthManager.hp = jarAdjuster.CollectorHp()));
 
         if (!(ForPlando ?? true))
         {
             List<bool> lunged = [false];
             var setHops = fsm.GetState("Set Hops");
             setHops.RemoveActionsOfType<RandomInt>();
-            setHops.AddLastAction(new Lambda(() => fsm.FsmVariables.GetFsmInt("Hops").Value = ChooseHops(lunged[0])));
+            setHops.AddLastAction(
+                new Lambda(() => fsm.FsmVariables.GetFsmInt("Hops").Value = ChooseHops(lunged[0]))
+            );
 
             var moveChoice = fsm.GetState("Move Choice");
             moveChoice.RemoveActionsOfType<SendRandomEventV2>();
-            moveChoice.AddFirstAction(new Lambda(() => fsm.SendEvent(ChooseLunge(lunged) ? "LUNGE" : "JUMP AWAY")));
+            moveChoice.AddFirstAction(
+                new Lambda(() => fsm.SendEvent(ChooseLunge(lunged) ? "LUNGE" : "JUMP AWAY"))
+            );
 
             fsm.GetState("Jump Antic").AddFirstAction(new Lambda(() => lunged[0] = false));
         }
 
         var roar = fsm.GetState("Roar");
-        roar.AddFirstAction(new Lambda(() => roar.GetFirstActionOfType<SetFsmString>().setValue = LanguageKey(++NumAttempts)));
+        roar.AddFirstAction(
+            new Lambda(() =>
+                roar.GetFirstActionOfType<SetFsmString>().setValue = LanguageKey(++NumAttempts)
+            )
+        );
 
         // Fix up the gates. Some enemies try to open them when they die.
         var bg1 = GameObject.Find("Battle Gate");
@@ -891,11 +961,14 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         var battleScene = fsm.gameObject.transform.parent.gameObject;
         var bFsm = battleScene.LocateMyFSM("Control");
-        bFsm.GetState("End").AddLastAction(new Lambda(() =>
-        {
-            ReallyOpen(bg1);
-            ReallyOpen(bg2);
-        }));
+        bFsm.GetState("End")
+            .AddLastAction(
+                new Lambda(() =>
+                {
+                    ReallyOpen(bg1);
+                    ReallyOpen(bg2);
+                })
+            );
 
         TightenBattleGate(bg1);
         TightenBattleGate(bg2);
@@ -907,14 +980,17 @@ internal class HoarderModule : ItemChanger.Modules.Module
         fsm.GetState("Check").GetFirstActionOfType<IntCompare>().integer2 = jarAdjuster.Phase2Hp();
 
         var phase2 = fsm.GetState("Phase 2");
-        while (phase2.Actions.Length > 0) phase2.RemoveAction(0);
+        while (phase2.Actions.Length > 0)
+            phase2.RemoveAction(0);
 
-        phase2.AddLastAction(new Lambda(() =>
-        {
-            var vars = fsm.gameObject.LocateMyFSM("Control").FsmVariables;
-            vars.GetFsmFloat("Resummon Pause").Value = 0.35f;
-            vars.GetFsmFloat("Hop X Speed").Value = -12.5f;
-        }));
+        phase2.AddLastAction(
+            new Lambda(() =>
+            {
+                var vars = fsm.gameObject.LocateMyFSM("Control").FsmVariables;
+                vars.GetFsmFloat("Resummon Pause").Value = 0.35f;
+                vars.GetFsmFloat("Hop X Speed").Value = -12.5f;
+            })
+        );
     }
 
     private void EliminateStunControl(PlayMakerFSM fsm)
@@ -929,14 +1005,17 @@ internal class HoarderModule : ItemChanger.Modules.Module
         ILCursor cursor = new(il);
         cursor.Goto(0);
         cursor.GotoNext(i => i.MatchLdfld<SpawnJarControl>("enemyToSpawn"));
-        cursor.GotoNext(i => i.MatchCall(typeof(ObjectPoolExtensions).FullName, nameof(ObjectPoolExtensions.Spawn)));
+        cursor.GotoNext(i =>
+            i.MatchCall(typeof(ObjectPoolExtensions).FullName, nameof(ObjectPoolExtensions.Spawn))
+        );
         cursor.Remove();
         cursor.EmitDelegate(SpawnCustomJar);
     }
 
     private readonly Dictionary<GameObject, Action<GameObject>> postSpawnHooks = [];
 
-    internal void SetPostSpawnHook(GameObject prefab, Action<GameObject> hook) => postSpawnHooks[prefab] = hook;
+    internal void SetPostSpawnHook(GameObject prefab, Action<GameObject> hook) =>
+        postSpawnHooks[prefab] = hook;
 
     private GameObject SpawnCustomJar(GameObject self, Vector3 position)
     {
@@ -945,12 +1024,14 @@ internal class HoarderModule : ItemChanger.Modules.Module
 
         obj.transform.position = position;
         obj.SetActive(true);
-        if (postSpawnHooks.TryGetValue(self, out var hook)) hook.Invoke(obj);
+        if (postSpawnHooks.TryGetValue(self, out var hook))
+            hook.Invoke(obj);
 
         return obj;
     }
 
-    private static string LanguageKey(int attempt) => (attempt == 5 || attempt == 20) ? $"HOARDER_{attempt}" : "HOARDER";
+    private static string LanguageKey(int attempt) =>
+        (attempt == 5 || attempt == 20) ? $"HOARDER_{attempt}" : "HOARDER";
 
     private static string LanguageGetHook(string key, string sheetTitle, string orig)
     {
@@ -980,13 +1061,17 @@ internal static class MathExt
 
         if (ab)
         {
-            if (ac) return bc ? b : c;
-            else return a;
+            if (ac)
+                return bc ? b : c;
+            else
+                return a;
         }
         else
         {
-            if (bc) return ac ? a : c;
-            else return b;
+            if (bc)
+                return ac ? a : c;
+            else
+                return b;
         }
     }
 }
@@ -995,10 +1080,17 @@ internal class HoarderFeature : AbstractSpicyFeature<HoarderModule>
 {
     public override string Name => "Hoarder";
     public override string Description => "Expands the variety of Collector's jar collection";
+
     public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        lmb.DoMacroEdit(new("COMBAT[Collector]", "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS + FIREBALL + SCREAM | FIREBALL>1 + SCREAM>1)"));
+        lmb.DoMacroEdit(
+            new(
+                "COMBAT[Collector]",
+                "ORIG + (SPICYCOMBATSKIPS + QUAKE + MASKSHARDS>19 | QUAKE>1 + MASKSHARDS>27) + (SPICYCOMBATSKIPS + FIREBALL + SCREAM | FIREBALL>1 + SCREAM>1)"
+            )
+        );
     }
+
     public override void Install()
     {
         var mod = ItemChangerMod.Modules.Add<HoarderModule>();

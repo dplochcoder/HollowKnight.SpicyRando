@@ -1,13 +1,13 @@
-﻿using HutongGames.PlayMaker.Actions;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using PurenailCore.CollectionUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
 using SpicyRando.Util;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -27,11 +27,22 @@ internal class GalienModule : AbstractGhostWarriorModule
         var summonFsm = obj.LocateMyFSM("Summon Minis");
         summonFsm.GetState("Idle").ClearTransitions();
 
-        var summonParticles = summonFsm.FsmVariables.GetFsmGameObject("Summon Pt").Value.GetComponent<ParticleSystem>();
-        var attackParticles = summonFsm.FsmVariables.GetFsmGameObject("Attack Pt").Value.GetComponent<ParticleSystem>();
-        var summonCry = summonFsm.GetState("Summon Antic").GetFirstActionOfType<AudioPlayerOneShot>();
-        var summonWhoosh = summonFsm.GetState("Summon").GetFirstActionOfType<AudioPlayerOneShotSingle>();
-        var miniHammerTemplate = summonFsm.GetState("Summon").GetFirstActionOfType<CreateObject>().gameObject.Value;
+        var summonParticles = summonFsm
+            .FsmVariables.GetFsmGameObject("Summon Pt")
+            .Value.GetComponent<ParticleSystem>();
+        var attackParticles = summonFsm
+            .FsmVariables.GetFsmGameObject("Attack Pt")
+            .Value.GetComponent<ParticleSystem>();
+        var summonCry = summonFsm
+            .GetState("Summon Antic")
+            .GetFirstActionOfType<AudioPlayerOneShot>();
+        var summonWhoosh = summonFsm
+            .GetState("Summon")
+            .GetFirstActionOfType<AudioPlayerOneShotSingle>();
+        var miniHammerTemplate = summonFsm
+            .GetState("Summon")
+            .GetFirstActionOfType<CreateObject>()
+            .gameObject.Value;
 
         IEnumerator Summon(System.Action creator)
         {
@@ -42,7 +53,8 @@ internal class GalienModule : AbstractGhostWarriorModule
             var origPos = obj.transform.position;
             yield return new WaitUntil(() =>
             {
-                obj.transform.position = origPos + new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
+                obj.transform.position =
+                    origPos + new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
 
                 timePassed.Value += Time.deltaTime;
                 return timePassed.Value >= 1f;
@@ -56,39 +68,57 @@ internal class GalienModule : AbstractGhostWarriorModule
             creator();
         }
 
-        IEnumerator SummonMiniHammer() => Summon(() => Object.Instantiate(miniHammerTemplate, obj.transform.position with { z = obj.transform.position.z - 0.029f }, Quaternion.identity));
-        IEnumerator SummonHammer(List<GameObject> otherHammers, Wrapped<GameObject?> newHammer) => Summon(() =>
-        {
-            newHammer.Value = Object.Instantiate(hammer, obj.transform.position, Quaternion.Euler(0, 0, -180));
-
-            var controlFsm = newHammer.Value.LocateMyFSM("Control");
-            var emerge = controlFsm.GetState("Emerge");
-            emerge.GetFirstActionOfType<iTweenRotateTo>().time = 1f;
-            emerge.GetFirstActionOfType<iTweenMoveTo>().time = 1f;
-
-            var attackFsm = newHammer.Value.LocateMyFSM("Attack");
-            IEnumerator StartAttack()
+        IEnumerator SummonMiniHammer() =>
+            Summon(() =>
+                Object.Instantiate(
+                    miniHammerTemplate,
+                    obj.transform.position with
+                    {
+                        z = obj.transform.position.z - 0.029f,
+                    },
+                    Quaternion.identity
+                )
+            );
+        IEnumerator SummonHammer(List<GameObject> otherHammers, Wrapped<GameObject?> newHammer) =>
+            Summon(() =>
             {
-                yield return new WaitUntil(() => controlFsm.ActiveStateName == "Init");
-                controlFsm.SendEvent("READY");
+                newHammer.Value = Object.Instantiate(
+                    hammer,
+                    obj.transform.position,
+                    Quaternion.Euler(0, 0, -180)
+                );
 
-                yield return new WaitForSeconds(1f);
-                yield return new WaitUntil(() => controlFsm.ActiveStateName == "Emerge");
-                controlFsm.SendEvent("READY");
+                var controlFsm = newHammer.Value.LocateMyFSM("Control");
+                var emerge = controlFsm.GetState("Emerge");
+                emerge.GetFirstActionOfType<iTweenRotateTo>().time = 1f;
+                emerge.GetFirstActionOfType<iTweenMoveTo>().time = 1f;
 
-                yield return new WaitUntil(() => attackFsm.ActiveStateName == "Idle");
-                yield return new WaitUntil(() => otherHammers.All(h =>
+                var attackFsm = newHammer.Value.LocateMyFSM("Attack");
+                IEnumerator StartAttack()
                 {
-                    var hFsm = h.LocateMyFSM("Attack");
-                    if (hFsm.ActiveStateName == "Anim" || hFsm.ActiveStateName == "Recel") return false;
+                    yield return new WaitUntil(() => controlFsm.ActiveStateName == "Init");
+                    controlFsm.SendEvent("READY");
 
-                    return hFsm.FsmVariables.GetFsmFloat("Active Timer").Value >= 2f;
-                }));
-                attackFsm.SendEvent("HAMMER ATTACK");
-            }
+                    yield return new WaitForSeconds(1f);
+                    yield return new WaitUntil(() => controlFsm.ActiveStateName == "Emerge");
+                    controlFsm.SendEvent("READY");
 
-            controlFsm.StartCoroutine(StartAttack());
-        });
+                    yield return new WaitUntil(() => attackFsm.ActiveStateName == "Idle");
+                    yield return new WaitUntil(() =>
+                        otherHammers.All(h =>
+                        {
+                            var hFsm = h.LocateMyFSM("Attack");
+                            if (hFsm.ActiveStateName == "Anim" || hFsm.ActiveStateName == "Recel")
+                                return false;
+
+                            return hFsm.FsmVariables.GetFsmFloat("Active Timer").Value >= 2f;
+                        })
+                    );
+                    attackFsm.SendEvent("HAMMER ATTACK");
+                }
+
+                controlFsm.StartCoroutine(StartAttack());
+            });
 
         IEnumerator DoSummons()
         {
@@ -115,7 +145,9 @@ internal class GalienModule : AbstractGhostWarriorModule
 
             Wrapped<bool> thirdHammer = new(false);
             yield return new WaitUntil(() => UpdatePhase(fsm, baseHp, thirdHammer, 1f / 7f));
-            yield return fsm.StartCoroutine(SummonHammer([hammer, secondHammerObj.Value!], new(null)));
+            yield return fsm.StartCoroutine(
+                SummonHammer([hammer, secondHammerObj.Value!], new(null))
+            );
         }
         fsm.StartCoroutine(DoSummons());
     }
@@ -124,5 +156,12 @@ internal class GalienModule : AbstractGhostWarriorModule
 internal class GalienFeature : AbstractGhostWarriorFeature<GalienModule>
 {
     public override string Name => "Galien";
-    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) => lmb.DoMacroEdit(new("COMBAT[Xero]", "ORIG + ANYSHADOWDASH + (SPICYCOMBATSKIPS | MASKSHARDS>19 + UPSLASH + (FIREBALL>1 | SCREAM>1 | QUAKE>1))"));
+
+    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) =>
+        lmb.DoMacroEdit(
+            new(
+                "COMBAT[Xero]",
+                "ORIG + ANYSHADOWDASH + (SPICYCOMBATSKIPS | MASKSHARDS>19 + UPSLASH + (FIREBALL>1 | SCREAM>1 | QUAKE>1))"
+            )
+        );
 }

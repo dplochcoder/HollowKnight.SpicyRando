@@ -1,6 +1,6 @@
-﻿using ItemChanger.Extensions;
-using System;
+﻿using System;
 using System.Collections;
+using ItemChanger.Extensions;
 using UnityEngine;
 
 namespace SpicyRando.Util;

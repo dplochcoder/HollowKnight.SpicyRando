@@ -1,4 +1,6 @@
-﻿using HutongGames.PlayMaker;
+﻿using System.Collections.Generic;
+using System.Linq;
+using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
@@ -7,8 +9,6 @@ using PurenailCore.CollectionUtil;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -35,7 +35,8 @@ internal class XeroModule : AbstractGhostWarriorModule
         newSword.transform.position = newHome.transform.position;
 
         fsm.AddFsmGameObject($"Sword {newNum}", newSword);
-        newSword.LocateMyFSM("xero_nail").FsmVariables.GetFsmString("Home Name").Value = newHome.name;
+        newSword.LocateMyFSM("xero_nail").FsmVariables.GetFsmString("Home Name").Value =
+            newHome.name;
     }
 
     private void FixSwordPos(PlayMakerFSM fsm, int a, int b, int c)
@@ -57,7 +58,8 @@ internal class XeroModule : AbstractGhostWarriorModule
         AddSword(fsm, 1, 3, 5);
         AddSword(fsm, 2, 4, 6);
 
-        for (int i = 1; i <= 6; i++) obj.FindChild($"S{i} Home")!.transform.Translate(new(0, -0.5f, 0));
+        for (int i = 1; i <= 6; i++)
+            obj.FindChild($"S{i} Home")!.transform.Translate(new(0, -0.5f, 0));
 
         Object.Destroy(obj.LocateMyFSM("Sword Summon"));
 
@@ -87,7 +89,8 @@ internal class XeroModule : AbstractGhostWarriorModule
             recoverState.GetFirstActionOfType<Wait>().time = recover;
         }
 
-        fsm.GetState("Check Hero Pos").AddFirstAction(new NextFrameEvent() { sendEvent = FsmEvent.GetFsmEvent("FINISHED") });
+        fsm.GetState("Check Hero Pos")
+            .AddFirstAction(new NextFrameEvent() { sendEvent = FsmEvent.GetFsmEvent("FINISHED") });
 
         var anticState = fsm.GetState("Antic");
         anticState.ClearTransitions();
@@ -104,10 +107,13 @@ internal class XeroModule : AbstractGhostWarriorModule
         Wrapped<List<int>> swordSummons = new([]);
         var summonState = fsm.GetState("Summon");
         summonState.RemoveActionsOfType<ActivateGameObject>();
-        summonState.AddLastAction(new Lambda(() =>
-        {
-            foreach (int num in swordSummons.Value) fsm.FsmVariables.GetFsmGameObject($"Sword {num}").Value.SetActive(true);
-        }));
+        summonState.AddLastAction(
+            new Lambda(() =>
+            {
+                foreach (int num in swordSummons.Value)
+                    fsm.FsmVariables.GetFsmGameObject($"Sword {num}").Value.SetActive(true);
+            })
+        );
 
         void SummonSwords(float antic, float wait, List<int> toSummon)
         {
@@ -118,45 +124,55 @@ internal class XeroModule : AbstractGhostWarriorModule
 
         IEnumerable<PlayMakerFSM> GetAllSwords()
         {
-            for (int i = 1; i <= 6; i++) yield return fsm.FsmVariables.GetFsmGameObject($"Sword {i}").Value.LocateMyFSM("xero_nail")!;
+            for (int i = 1; i <= 6; i++)
+                yield return fsm
+                    .FsmVariables.GetFsmGameObject($"Sword {i}")
+                    .Value.LocateMyFSM("xero_nail")!;
         }
-        IEnumerable<PlayMakerFSM> GetAvailableSwords() => GetAllSwords().Where(s => s.gameObject.activeSelf && !s.FsmVariables.GetFsmBool("Attacking").Value);
+        IEnumerable<PlayMakerFSM> GetAvailableSwords() =>
+            GetAllSwords()
+                .Where(s =>
+                    s.gameObject.activeSelf && !s.FsmVariables.GetFsmBool("Attacking").Value
+                );
 
         Wrapped<bool> phase2 = new(false);
         Wrapped<bool> phase3 = new(false);
         Wrapped<int> numAttacks = new(1);
-        anticState.AddFirstAction(new Lambda(() =>
-        {
-            if (UpdatePhase(fsm, baseHp, phase2, 0.75f))
+        anticState.AddFirstAction(
+            new Lambda(() =>
             {
-                SetSpeed(9.5f, 50f, 1f, 5f);
-                SetWait(0.65f, 0.75f, 0.9f);
-                SummonSwords(0.5f, 0.5f, [3, 4]);
-                fsm.SendEvent("SUMMON");
-                return;
-            }
-            if (UpdatePhase(fsm, baseHp, phase3, 0.5f))
-            {
-                SetSpeed(10f, 55f, 0.75f, 4.5f);
-                SetWait(0.6f, 0.7f, 0.9f);
-                SummonSwords(0.5f, 0.5f, [5, 6]);
-                FixSwordPos(fsm, 1, 3, 5);
-                FixSwordPos(fsm, 2, 4, 6);
-                numAttacks.Value = 2;
-                fsm.SendEvent("SUMMON");
-                return;
-            }
+                if (UpdatePhase(fsm, baseHp, phase2, 0.75f))
+                {
+                    SetSpeed(9.5f, 50f, 1f, 5f);
+                    SetWait(0.65f, 0.75f, 0.9f);
+                    SummonSwords(0.5f, 0.5f, [3, 4]);
+                    fsm.SendEvent("SUMMON");
+                    return;
+                }
+                if (UpdatePhase(fsm, baseHp, phase3, 0.5f))
+                {
+                    SetSpeed(10f, 55f, 0.75f, 4.5f);
+                    SetWait(0.6f, 0.7f, 0.9f);
+                    SummonSwords(0.5f, 0.5f, [5, 6]);
+                    FixSwordPos(fsm, 1, 3, 5);
+                    FixSwordPos(fsm, 2, 4, 6);
+                    numAttacks.Value = 2;
+                    fsm.SendEvent("SUMMON");
+                    return;
+                }
 
-            List<PlayMakerFSM> availableSwords = [.. GetAvailableSwords()];
-            if (availableSwords.Count == 0)
-            {
-                fsm.SendEvent("CANCEL");
-                return;
-            }
+                List<PlayMakerFSM> availableSwords = [.. GetAvailableSwords()];
+                if (availableSwords.Count == 0)
+                {
+                    fsm.SendEvent("CANCEL");
+                    return;
+                }
 
-            availableSwords.Shuffle(new());
-            for (int i = 0; i < numAttacks.Value && i < availableSwords.Count; i++) availableSwords[i].SendEvent("ATTACK");
-        }));
+                availableSwords.Shuffle(new());
+                for (int i = 0; i < numAttacks.Value && i < availableSwords.Count; i++)
+                    availableSwords[i].SendEvent("ATTACK");
+            })
+        );
         anticState.AddLastAction(new Lambda(() => fsm.SendEvent("SHOOT")));
     }
 }
@@ -164,5 +180,12 @@ internal class XeroModule : AbstractGhostWarriorModule
 internal class XeroFeature : AbstractGhostWarriorFeature<XeroModule>
 {
     public override string Name => "Xero";
-    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) => lmb.DoMacroEdit(new("COMBAT[Xero]", "ORIG + FULLDASH + (SPICYCOMBATSKIPS | MASKSHARDS>15 + UPSLASH + (FIREBALL | SCREAM))"));
+
+    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) =>
+        lmb.DoMacroEdit(
+            new(
+                "COMBAT[Xero]",
+                "ORIG + FULLDASH + (SPICYCOMBATSKIPS | MASKSHARDS>15 + UPSLASH + (FIREBALL | SCREAM))"
+            )
+        );
 }

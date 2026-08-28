@@ -1,4 +1,5 @@
-﻿using HutongGames.PlayMaker;
+﻿using System.Collections.Generic;
+using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
@@ -7,7 +8,6 @@ using PurenailCore.CollectionUtil;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Settings;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace SpicyRando.IC;
@@ -33,7 +33,8 @@ internal class AnimationAccelerator : MonoBehaviour
             clip = null;
             accel = 1;
         }
-        else if (accel > 1) animator?.UpdateAnimation(Time.deltaTime * (accel - 1));
+        else if (accel > 1)
+            animator?.UpdateAnimation(Time.deltaTime * (accel - 1));
     }
 }
 
@@ -78,7 +79,8 @@ internal class GrassAttack : MonoBehaviour
 
     private void Update()
     {
-        if (health?.hp <= 0) Destroy(this);
+        if (health?.hp <= 0)
+            Destroy(this);
 
         if (!SphereActive())
         {
@@ -91,15 +93,18 @@ internal class GrassAttack : MonoBehaviour
 
         if (prevTime < DELAY && time >= DELAY)
         {
-            for (int i = 0; i < NumProjectiles; i++) FireSphere(i);
+            for (int i = 0; i < NumProjectiles; i++)
+                FireSphere(i);
         }
     }
 
     internal HashSet<GameObject> grassBalls = [];
 
-    private void OnDestroy() => grassBalls.ForEach(b => b.LocateMyFSM("grass ball control").SetState("Break"));
+    private void OnDestroy() =>
+        grassBalls.ForEach(b => b.LocateMyFSM("grass ball control").SetState("Break"));
 
-    private bool SphereActive() => fsm?.ActiveStateName == "Sphere A" || fsm?.ActiveStateName == "Sphere";
+    private bool SphereActive() =>
+        fsm?.ActiveStateName == "Sphere A" || fsm?.ActiveStateName == "Sphere";
 
     private bool Aerial() => fsm?.ActiveStateName == "Sphere A";
 
@@ -107,11 +112,15 @@ internal class GrassAttack : MonoBehaviour
 
     private void FireSphere(int index)
     {
-        if (index == 0) startAngle = Random.Range(0f, 360f);
+        if (index == 0)
+            startAngle = Random.Range(0f, 360f);
 
         float dir = gameObject.transform.localScale.x > 0 ? -1 : 1;
         float realAngle = startAngle + dir * 360 * index / NumProjectiles;
-        Vector2 vec = new(Mathf.Cos(realAngle * Mathf.Deg2Rad), Mathf.Sin(realAngle * Mathf.Deg2Rad));
+        Vector2 vec = new(
+            Mathf.Cos(realAngle * Mathf.Deg2Rad),
+            Mathf.Sin(realAngle * Mathf.Deg2Rad)
+        );
         Vector3 vec3 = vec;
 
         var ball = Preloader.Instance.GrassBall.Spawn(gameObject.transform.position + 0.5f * vec3);
@@ -169,28 +178,36 @@ internal class GitGudModule : ItemChanger.Modules.Module
         vars.SetFloat("Stun Air Speed", 20);
         vars.SetFloat("Throw Speed", 65);
 
-        Wrapped<bool> escalated = new(false);;
-        fsm.GetState("Escalation").AddFirstAction(new Lambda(() =>
-        {
-            if (health.hp <= newHp / 2 && !escalated.Value)
-            {
-                // Escalate.
-                escalated.Value = true;
+        Wrapped<bool> escalated = new(false);
+        ;
+        fsm.GetState("Escalation")
+            .AddFirstAction(
+                new Lambda(() =>
+                {
+                    if (health.hp <= newHp / 2 && !escalated.Value)
+                    {
+                        // Escalate.
+                        escalated.Value = true;
 
-                vars.SetFloat("Idle Wait Max", 0.3f);
-                vars.SetFloat("Idle Wait Min", 0.15f);
-                vars.SetFloat("Run Wait Max", 0.35f);
-                vars.SetFloat("Run Wait Min", 0.15f);
-                vars.SetFloat("Throw Speed", 75);
-            }
-            fsm.SendEvent("FINISHED");
-        }));
+                        vars.SetFloat("Idle Wait Max", 0.3f);
+                        vars.SetFloat("Idle Wait Min", 0.15f);
+                        vars.SetFloat("Run Wait Max", 0.35f);
+                        vars.SetFloat("Run Wait Min", 0.15f);
+                        vars.SetFloat("Throw Speed", 75);
+                    }
+                    fsm.SendEvent("FINISHED");
+                })
+            );
 
         fsm.GetState("ADash Antic").AccelerateAnimation(accel, 1.65f);
-        fsm.GetState("After Evade").GetFirstActionOfType<SendRandomEvent>().SetWeights(0.65f, 0.35f);
+        fsm.GetState("After Evade")
+            .GetFirstActionOfType<SendRandomEvent>()
+            .SetWeights(0.65f, 0.35f);
         fsm.GetState("Aim Sphere Jump").GetFirstActionOfType<FloatMultiply>().multiplyBy = 2.5f;
         fsm.GetState("Dmg Idle").GetFirstActionOfType<WaitRandom>().SetTimeRange(0.1f, 0.25f);
-        fsm.GetState("Dmg Response").GetFirstActionOfType<SendRandomEvent>().SetWeights(0.2f, 0.35f, 0.35f, 0.1f);
+        fsm.GetState("Dmg Response")
+            .GetFirstActionOfType<SendRandomEvent>()
+            .SetWeights(0.2f, 0.35f, 0.35f, 0.1f);
         fsm.GetState("Evade").GetFirstActionOfType<Wait>().time = 0.165f;
         fsm.GetState("Evade Antic").AccelerateAnimation(accel, 2f);
         fsm.GetState("Evade Land").AccelerateAnimation(accel, 1.5f);
@@ -292,7 +309,9 @@ internal class GitGudModule : ItemChanger.Modules.Module
         g.gravityScale = gravity;
 
         var rb2d = state.Fsm.Owner.gameObject.GetComponent<Rigidbody2D>();
-        state.AddLastAction(new Lambda(() => rb2d.velocity = new(MathExt.Mid(-25, rb2d.velocity.x * xScale, 25), y)));
+        state.AddLastAction(
+            new Lambda(() => rb2d.velocity = new(MathExt.Mid(-25, rb2d.velocity.x * xScale, 25), y))
+        );
     }
 
     private const float QUICK_PROB = 0.65f;
@@ -300,11 +319,13 @@ internal class GitGudModule : ItemChanger.Modules.Module
 
     private static void MaybeQuickGSphere(PlayMakerFSM fsm)
     {
-        if (Random.Range(0f, 1f) > QUICK_PROB) return;
+        if (Random.Range(0f, 1f) > QUICK_PROB)
+            return;
 
         var kPos = HeroController.instance.gameObject.transform.position;
         var hPos = fsm.gameObject.transform.position;
-        if (Mathf.Abs(kPos.x - hPos.x) > QUICK_XRANGE) return;
+        if (Mathf.Abs(kPos.x - hPos.x) > QUICK_XRANGE)
+            return;
 
         fsm.SetState("G Sphere Delay");
     }
@@ -324,31 +345,41 @@ internal static class FsmExtensions
         self.timeMax.Value = max;
     }
 
-    internal static void SetFloat(this FsmVariables self, string name, float value) => self.GetFsmFloat(name).Value = value;
+    internal static void SetFloat(this FsmVariables self, string name, float value) =>
+        self.GetFsmFloat(name).Value = value;
 
-    internal static void Amplify(this DecelerateV2 self, float pow) => self.deceleration.Value = Mathf.Pow(self.deceleration.Value, pow);
+    internal static void Amplify(this DecelerateV2 self, float pow) =>
+        self.deceleration.Value = Mathf.Pow(self.deceleration.Value, pow);
 
     internal static void SetWeights(this SendRandomEvent self, params float[] values)
     {
-        for (int i = 0; i < values.Length; i++) self.weights[i].Value = values[i];
+        for (int i = 0; i < values.Length; i++)
+            self.weights[i].Value = values[i];
     }
 
     internal static void SetWeights(this SendRandomEventV3 self, params float[] values)
     {
-        for (int i = 0; i < values.Length; i++) self.weights[i].Value = values[i];
+        for (int i = 0; i < values.Length; i++)
+            self.weights[i].Value = values[i];
     }
 
     internal static void SetMaxes(this SendRandomEventV3 self, params int[] values)
     {
-        for (int i = 0; i < values.Length; i++) self.eventMax[i].Value = values[i];
+        for (int i = 0; i < values.Length; i++)
+            self.eventMax[i].Value = values[i];
     }
 
     internal static void SetMaxMisses(this SendRandomEventV3 self, params int[] values)
     {
-        for (int i = 0; i < values.Length; i++) self.missedMax[i].Value = values[i];
+        for (int i = 0; i < values.Length; i++)
+            self.missedMax[i].Value = values[i];
     }
 
-    internal static void AccelerateAnimation(this FsmState self, AnimationAccelerator accelerator, float accel)
+    internal static void AccelerateAnimation(
+        this FsmState self,
+        AnimationAccelerator accelerator,
+        float accel
+    )
     {
         var clip = self.GetFirstActionOfType<Tk2dPlayAnimationWithEvents>().clipName.Value;
         self.AddLastAction(new Lambda(() => accelerator.AccelerateClip(clip, accel)));
@@ -359,8 +390,14 @@ internal class GitGudFeature : AbstractSpicyFeature<GitGudModule>
 {
     public override string Name => "Git Gud";
     public override string Description => "Makes obtaining Mothwing Cloak slightly more difficult";
+
     public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        lmb.DoMacroEdit(new("COMBAT[Hornet_1]", "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"));
+        lmb.DoMacroEdit(
+            new(
+                "COMBAT[Hornet_1]",
+                "ORIG + (SPICYCOMBATSKIPS | MASKSHARDS>15 + (FIREBALL + FULLDASH | QUAKE + FULLDASH | FIREBALL + QUAKE))"
+            )
+        );
     }
 }

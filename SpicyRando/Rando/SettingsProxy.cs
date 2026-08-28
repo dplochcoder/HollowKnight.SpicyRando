@@ -7,7 +7,8 @@ internal class SettingsProxy : RandoSettingsProxy<RandomizationSettings, string>
 {
     public override string ModKey => nameof(SpicyRando);
 
-    public override VersioningPolicy<string> VersioningPolicy => new StrictModVersioningPolicy(SpicyRando.Instance);
+    public override VersioningPolicy<string> VersioningPolicy =>
+        new StrictModVersioningPolicy(SpicyRando.Instance);
 
     public override bool TryProvideSettings(out RandomizationSettings? settings)
     {

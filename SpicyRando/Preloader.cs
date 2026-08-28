@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using PurenailCore.ModUtil;
+﻿using PurenailCore.ModUtil;
+using UnityEngine;
 
 namespace SpicyRando;
 
@@ -25,7 +25,10 @@ internal class Preloader : PurenailCore.ModUtil.Preloader
     [Preload("Fungus3_23_boss", "Battle Scene/Battle Gate (2)")]
     public GameObject BattleGateVertical { get; private set; }
 
-    [Preload("Room_Colosseum_Silver", "Colosseum Manager/Waves/Wave 26 Obble/Colosseum Cage Small (1)")]
+    [Preload(
+        "Room_Colosseum_Silver",
+        "Colosseum Manager/Waves/Wave 26 Obble/Colosseum Cage Small (1)"
+    )]
     public GameObject BattleObbleCage { get; private set; }
 
     [Preload("Waterways_08", "Ceiling Dropper")]
@@ -99,5 +102,6 @@ internal class Preloader : PurenailCore.ModUtil.Preloader
 
 internal static class GameObjectExtensions
 {
-    internal static GameObject ExtractFromCage(this GameObject self) => self.LocateMyFSM("Spawn").Fsm.GetFsmGameObject("Enemy Type").Value;
+    internal static GameObject ExtractFromCage(this GameObject self) =>
+        self.LocateMyFSM("Spawn").Fsm.GetFsmGameObject("Enemy Type").Value;
 }

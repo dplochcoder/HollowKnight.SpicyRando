@@ -1,10 +1,10 @@
-﻿using GlobalEnums;
+﻿using System.Collections;
+using GlobalEnums;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger;
 using ItemChanger.Extensions;
 using ItemChanger.FsmStateActions;
 using Modding;
-using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -76,10 +76,14 @@ internal class SpicyBrettaController : MonoBehaviour
         squishTurret.transform.SetPositionX(18);
         var mawlek = Spawn(pre.BroodingMawlek, new(18, 44.2f, 2.4f));
         var mawlekCtrl = mawlek.LocateMyFSM("Mawlek Control");
-        mawlekCtrl.GetState("Wake Land").AddLastAction(new Lambda(() =>
-        {
-            squishTurret.GetComponent<HealthManager>().ApplyExtraDamage(999);
-        }));
+        mawlekCtrl
+            .GetState("Wake Land")
+            .AddLastAction(
+                new Lambda(() =>
+                {
+                    squishTurret.GetComponent<HealthManager>().ApplyExtraDamage(999);
+                })
+            );
         mawlekCtrl.GetState("Title").GetFirstActionOfType<SetFsmString>().setValue = "BRETTEK";
 
         gate = Spawn(pre.BattleGateVertical, new(42.5f, 5.7f));
@@ -94,11 +98,13 @@ internal class SpicyBrettaController : MonoBehaviour
         obj.transform.SetParent(transform);
         obj.name = $"SpicyBrettaMinion{spawnCounter++}_{prefab.name}";
         obj.transform.position = pos;
-        if (pos.z == 0) obj.transform.SetPositionZ(prefab.transform.position.z);
+        if (pos.z == 0)
+            obj.transform.SetPositionZ(prefab.transform.position.z);
         obj.transform.localRotation = prefab.transform.localRotation;
 
         var persistent = obj.GetComponent<PersistentBoolItem>();
-        if (persistent != null) Destroy(persistent);
+        if (persistent != null)
+            Destroy(persistent);
         obj.SetActive(true);
 
         return obj;
@@ -119,7 +125,8 @@ internal class SpicyBrettaController : MonoBehaviour
         if (numSpikes > 2)
         {
             float spacing = (realY2 - realY1) / (numSpikes - 1);
-            for (int i = 0; i < (numSpikes - 2); i++) SpawnSpikeTile(left, realX, realY1 + (i + 1) * spacing);
+            for (int i = 0; i < (numSpikes - 2); i++)
+                SpawnSpikeTile(left, realX, realY1 + (i + 1) * spacing);
         }
 
         var hazard = new GameObject("Spike Hazard");
@@ -149,7 +156,8 @@ internal class SpicyBrettaController : MonoBehaviour
         ModHooks.SetPlayerBoolHook -= OverrideKilledTraitorLord;
         Events.RemoveFsmEdit(battleSceneId, DisableActivation);
 
-        if (bossLoaded) UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("Fungus3_23_boss");
+        if (bossLoaded)
+            UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("Fungus3_23_boss");
         dnailFsm?.GetState("Can Set?").RemoveFirstActionOfType<Lambda>();
     }
 
@@ -157,7 +165,10 @@ internal class SpicyBrettaController : MonoBehaviour
     private const float TRAITOR_X2 = 31f;
     private const float TRAITOR_Y = 6f;
 
-    private bool OverrideKilledTraitorLord(string name, bool value) => name == nameof(PlayerData.killedTraitorLord) ? PlayerData.instance.killedTraitorLord : value;
+    private bool OverrideKilledTraitorLord(string name, bool value) =>
+        name == nameof(PlayerData.killedTraitorLord)
+            ? PlayerData.instance.killedTraitorLord
+            : value;
 
     private void DisableActivation(PlayMakerFSM fsm)
     {
@@ -168,13 +179,17 @@ internal class SpicyBrettaController : MonoBehaviour
     private IEnumerator LazilySpawnTraitorLord()
     {
         yield return 0;
-        yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("Fungus3_23_boss", LoadSceneMode.Additive);
+        yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
+            "Fungus3_23_boss",
+            LoadSceneMode.Additive
+        );
         bossLoaded = true;
 
         var battleScene = GameObject.Find("Battle Scene");
         battleScene.SetActive(false);
 
-        while (!IsMushroomAwake() && knight!.transform.position.x > 25.5f) yield return 0;
+        while (!IsMushroomAwake() && knight!.transform.position.x > 25.5f)
+            yield return 0;
 
         var traitor = battleScene.FindChild("Wave 3")!.FindChild("Mantis Traitor Lord")!;
         traitor.transform.SetParent(null);
@@ -195,8 +210,9 @@ internal class SpicyBrettaController : MonoBehaviour
         traitor.SetActive(true);
         fsm.SetState("Fall");
 
-        while (fsm.ActiveStateName == "Fall") yield return 0;
-        mushroomRoller?.GetComponent<HealthManager>().ApplyExtraDamage(999);  // Squish
+        while (fsm.ActiveStateName == "Fall")
+            yield return 0;
+        mushroomRoller?.GetComponent<HealthManager>().ApplyExtraDamage(999); // Squish
 
         gate.LocateMyFSM("BG Control").SendEvent("BG CLOSE");
 
@@ -208,10 +224,14 @@ internal class SpicyBrettaController : MonoBehaviour
 
     private bool IsMushroomAwake()
     {
-        if (mushroomRoller == null) return false;
+        if (mushroomRoller == null)
+            return false;
 
         var fsm = mushroomRoller.LocateMyFSM("Mush Roller");
-        return fsm != null && fsm.ActiveStateName != "" && fsm.ActiveStateName != "Init" && fsm.ActiveStateName != "Sleep";
+        return fsm != null
+            && fsm.ActiveStateName != ""
+            && fsm.ActiveStateName != "Init"
+            && fsm.ActiveStateName != "Sleep";
     }
 }
 
@@ -232,9 +252,13 @@ internal class SpicyBrettaModule : ItemChanger.Modules.Module
     private void MakeBrettaSpicy(Scene scene)
     {
         var pd = PlayerData.instance;
-        if (pd.GetBool(nameof(pd.brettaRescued))) return;
+        if (pd.GetBool(nameof(pd.brettaRescued)))
+            return;
 
-        bool hasClaw = pd.GetBool(nameof(pd.hasWalljump)) || pd.GetBool("hasWalljumpLeft") || pd.GetBool("hasWalljumpRight");
+        bool hasClaw =
+            pd.GetBool(nameof(pd.hasWalljump))
+            || pd.GetBool("hasWalljumpLeft")
+            || pd.GetBool("hasWalljumpRight");
 
         // Always spawn the lore tablet.
         ItemChanger.Deployers.TabletDeployer lore = new()
@@ -245,7 +269,8 @@ internal class SpicyBrettaModule : ItemChanger.Modules.Module
         };
         lore.OnSceneChange(scene);
 
-        if (!hasClaw) return;
+        if (!hasClaw)
+            return;
 
         var controller = new GameObject("SpicyBrettaController");
         controller.SetActive(false);
@@ -253,7 +278,10 @@ internal class SpicyBrettaModule : ItemChanger.Modules.Module
         controller.SetActive(true);
     }
 
-    private string LoreText(bool hasClaw) => hasClaw ? "You should have come here before you found the Claw." : "The warrior's claw invites challenge. You'd best save the maiden without it.";
+    private string LoreText(bool hasClaw) =>
+        hasClaw
+            ? "You should have come here before you found the Claw."
+            : "The warrior's claw invites challenge. You'd best save the maiden without it.";
 
     private string SpicyBrettaHook(string key, string sheetTitle, string orig)
     {

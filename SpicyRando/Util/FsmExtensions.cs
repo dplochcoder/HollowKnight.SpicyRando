@@ -1,7 +1,7 @@
-﻿using HutongGames.PlayMaker;
+﻿using System.Reflection;
+using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using ItemChanger.Extensions;
-using System.Reflection;
 using UnityEngine;
 
 namespace SpicyRando.Util;
@@ -22,14 +22,16 @@ internal class AnimationAccelerator : MonoBehaviour
 
     private void Update()
     {
-        if (animator == null) return;
+        if (animator == null)
+            return;
 
         if (animator.CurrentClip.name != clipName)
         {
             clipName = null;
             accel = 1;
         }
-        else if (accel > 1) animator.UpdateAnimation(Time.deltaTime * (accel - 1));
+        else if (accel > 1)
+            animator.UpdateAnimation(Time.deltaTime * (accel - 1));
     }
 }
 
@@ -44,10 +46,18 @@ internal class AccelerateAnimationAction : FsmStateAction
 
 internal static class FsmExtensions
 {
-    public static void AccelerateAnimation(this FsmState self, AnimationAccelerator accelerator, float accel)
+    public static void AccelerateAnimation(
+        this FsmState self,
+        AnimationAccelerator accelerator,
+        float accel
+    )
     {
-        var clip = (self.GetFirstActionOfType<Tk2dPlayAnimationWithEvents>()?.clipName ?? self.GetFirstActionOfType<Tk2dPlayAnimation>()?.clipName)?.Value;
-        if (clip == null) return;
+        var clip = (
+            self.GetFirstActionOfType<Tk2dPlayAnimationWithEvents>()?.clipName
+            ?? self.GetFirstActionOfType<Tk2dPlayAnimation>()?.clipName
+        )?.Value;
+        if (clip == null)
+            return;
 
         var action = self.GetFirstActionOfType<AccelerateAnimationAction>();
         if (action == null)
@@ -61,9 +71,15 @@ internal static class FsmExtensions
         action.accel = accel;
     }
 
-    private static MethodInfo doPlayRandomClipSingle = typeof(AudioPlayerOneShotSingle).GetMethod("DoPlayRandomClip", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static MethodInfo doPlayRandomClipSingle = typeof(AudioPlayerOneShotSingle).GetMethod(
+        "DoPlayRandomClip",
+        BindingFlags.NonPublic | BindingFlags.Instance
+    );
 
-    private static void DoPlayRandomClipImpl(this AudioPlayerOneShotSingle self, float? volume = null)
+    private static void DoPlayRandomClipImpl(
+        this AudioPlayerOneShotSingle self,
+        float? volume = null
+    )
     {
         if (volume.HasValue)
         {
@@ -72,16 +88,25 @@ internal static class FsmExtensions
             doPlayRandomClipSingle.Invoke(self, []);
             self.volume = prev;
         }
-        else doPlayRandomClipSingle.Invoke(self, []);
+        else
+            doPlayRandomClipSingle.Invoke(self, []);
     }
 
     public static void DoPlayRandomClip(this AudioPlayerOneShotSingle self, float? volume = null)
     {
-        if (self.delay.Value <= 0) self.DoPlayRandomClipImpl(volume);
-        else self.Fsm.FsmComponent.gameObject.DoAfter(() => self.DoPlayRandomClipImpl(volume), self.delay.Value);
+        if (self.delay.Value <= 0)
+            self.DoPlayRandomClipImpl(volume);
+        else
+            self.Fsm.FsmComponent.gameObject.DoAfter(
+                () => self.DoPlayRandomClipImpl(volume),
+                self.delay.Value
+            );
     }
 
-    private static MethodInfo doPlayRandomClip = typeof(AudioPlayerOneShot).GetMethod("DoPlayRandomClip", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static MethodInfo doPlayRandomClip = typeof(AudioPlayerOneShot).GetMethod(
+        "DoPlayRandomClip",
+        BindingFlags.NonPublic | BindingFlags.Instance
+    );
 
     private static void DoPlayRandomClipImpl(this AudioPlayerOneShot self, float? volume = null)
     {
@@ -92,12 +117,18 @@ internal static class FsmExtensions
             doPlayRandomClip.Invoke(self, []);
             self.volume = prev;
         }
-        else doPlayRandomClip.Invoke(self, []);
+        else
+            doPlayRandomClip.Invoke(self, []);
     }
 
     public static void DoPlayRandomClip(this AudioPlayerOneShot self, float? volume = null)
     {
-        if (self.delay.Value <= 0) self.DoPlayRandomClipImpl(volume);
-        else self.Fsm.FsmComponent.gameObject.DoAfter(() => self.DoPlayRandomClipImpl(volume), self.delay.Value);
+        if (self.delay.Value <= 0)
+            self.DoPlayRandomClipImpl(volume);
+        else
+            self.Fsm.FsmComponent.gameObject.DoAfter(
+                () => self.DoPlayRandomClipImpl(volume),
+                self.delay.Value
+            );
     }
 }

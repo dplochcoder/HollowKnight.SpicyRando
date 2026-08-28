@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
 using PurenailCore.SystemUtil;
 using RandomizerCore.Logic;
 using RandomizerMod.Extensions;
 using RandomizerMod.Logging;
 using RandomizerMod.RC;
 using RandomizerMod.Settings;
-using System.Collections.Generic;
-using System.IO;
 
 namespace SpicyRando.Rando;
 
@@ -25,20 +25,27 @@ internal class RandoInterop
 
     private static void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb)
     {
-        foreach (var feature in SpicyFeatures.All()) if (feature.Get(Settings)) feature.ApplyLogicChanges(gs, lmb);
+        foreach (var feature in SpicyFeatures.All())
+            if (feature.Get(Settings))
+                feature.ApplyLogicChanges(gs, lmb);
     }
 
     private static void InstallSpicyRandoFeatures(RandoController rc)
     {
-        foreach (var feature in SpicyFeatures.All()) if (feature.Get(Settings)) feature.Install();
+        foreach (var feature in SpicyFeatures.All())
+            if (feature.Get(Settings))
+                feature.Install();
     }
 
     private static int AdjustHash(RandoController rc, int orig)
     {
-        if (!Settings.IsEnabled) return 0;
+        if (!Settings.IsEnabled)
+            return 0;
 
         List<string> enabled = [];
-        foreach (var feature in SpicyFeatures.All()) if (feature.Get(Settings)) enabled.Add(feature.Name);
+        foreach (var feature in SpicyFeatures.All())
+            if (feature.Get(Settings))
+                enabled.Add(feature.Name);
         enabled.Sort();
 
         return string.Join("|", enabled).GetStableHashCode();

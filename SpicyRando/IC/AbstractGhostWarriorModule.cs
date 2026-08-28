@@ -36,9 +36,15 @@ internal abstract class AbstractGhostWarriorModule : ItemChanger.Modules.Module
         ModifyGhostWarrior(fsm, baseHp);
     }
 
-    protected bool UpdatePhase(PlayMakerFSM fsm, Wrapped<int> baseHp, Wrapped<bool> activated, float pct)
+    protected bool UpdatePhase(
+        PlayMakerFSM fsm,
+        Wrapped<int> baseHp,
+        Wrapped<bool> activated,
+        float pct
+    )
     {
-        if (activated.Value || baseHp.Value == 0) return false;
+        if (activated.Value || baseHp.Value == 0)
+            return false;
 
         var hp = fsm.gameObject.GetComponent<HealthManager>().hp;
         if (hp <= baseHp.Value * pct)
@@ -53,7 +59,8 @@ internal abstract class AbstractGhostWarriorModule : ItemChanger.Modules.Module
     protected abstract void ModifyGhostWarrior(PlayMakerFSM fsm, Wrapped<int> baseHp);
 }
 
-internal abstract class AbstractGhostWarriorFeature<M> : AbstractSpicyFeature<M> where M : ItemChanger.Modules.Module, new()
+internal abstract class AbstractGhostWarriorFeature<M> : AbstractSpicyFeature<M>
+    where M : ItemChanger.Modules.Module, new()
 {
     public override string Description => $"Makes {Name} restless and violent";
     public override string? CategoryName => "Nightmares";

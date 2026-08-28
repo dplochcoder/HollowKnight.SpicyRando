@@ -29,7 +29,8 @@ internal class FixHitVelocity : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (rb2d == null || fixFrames == 0) return;
+        if (rb2d == null || fixFrames == 0)
+            return;
 
         --fixFrames;
         rb2d.velocity = fixedVelocity;
@@ -56,7 +57,11 @@ internal class MarmuModule : AbstractGhostWarriorModule
         }
 
         var objectBounce = fsm.gameObject.GetComponent<ObjectBounce>();
-        void FixObjectBounce(On.ObjectBounce.orig_OnCollisionEnter2D orig, ObjectBounce self, Collision2D collision)
+        void FixObjectBounce(
+            On.ObjectBounce.orig_OnCollisionEnter2D orig,
+            ObjectBounce self,
+            Collision2D collision
+        )
         {
             if (self == objectBounce)
             {
@@ -78,8 +83,10 @@ internal class MarmuModule : AbstractGhostWarriorModule
             var rb2d = fsm.gameObject.GetComponent<Rigidbody2D>();
 
             var v = rb2d.velocity;
-            if (x != null) v.x = x.Value / Mathf.Sqrt(speedMultiplier.Value);
-            if (y != null) v.y = y.Value / Mathf.Sqrt(speedMultiplier.Value);
+            if (x != null)
+                v.x = x.Value / Mathf.Sqrt(speedMultiplier.Value);
+            if (y != null)
+                v.y = y.Value / Mathf.Sqrt(speedMultiplier.Value);
             rb2d.velocity = v;
 
             fixer.FixVelocity(v, 3);
@@ -135,44 +142,57 @@ internal class MarmuModule : AbstractGhostWarriorModule
         unrollState.AddTransition("UNROLL WARP", "Warp?");
         unrollState.RemoveActionsOfType<Wait>();
         unrollState.AddLastAction(new Lambda(() => unrollTimer.Value = 0));
-        unrollState.AddLastAction(new LambdaEveryFrame(() =>
-        {
-            unrollTimer.Value += Time.deltaTime;
-            if (unrollTimer.Value >= unrollTime.Value) fsm.SendEvent("UNROLL WARP");
-        }));
+        unrollState.AddLastAction(
+            new LambdaEveryFrame(() =>
+            {
+                unrollTimer.Value += Time.deltaTime;
+                if (unrollTimer.Value >= unrollTime.Value)
+                    fsm.SendEvent("UNROLL WARP");
+            })
+        );
 
         Wrapped<bool> phase2 = new(false);
         Wrapped<bool> phase3 = new(false);
         Wrapped<bool> phase4 = new(false);
         Wrapped<bool> phase5 = new(false);
-        fsm.GetState("Antic").AddFirstAction(new Lambda(() =>
-        {
-            if (UpdatePhase(fsm, baseHp, phase2, 0.8f))
-            {
-                SetWaits(1.25f, 3f, 0.6f);
-                SetSpeedMultiplier(1.1f);
-            }
-            else if (UpdatePhase(fsm, baseHp, phase3, 0.6f))
-            {
-                SetWaits(1f, 2.5f, 0.5f);
-                SetSpeedMultiplier(1.15f);
-            }
-            else if (UpdatePhase(fsm, baseHp, phase4, 0.4f))
-            {
-                SetWaits(0.8f, 2.2f, 0.4f);
-                SetSpeedMultiplier(1.2f);
-            }
-            else if (UpdatePhase(fsm, baseHp, phase5, 0.2f))
-            {
-                SetWaits(0.7f, 2f, 0.3f);
-                SetSpeedMultiplier(1.25f);
-            }
-        }));
+        fsm.GetState("Antic")
+            .AddFirstAction(
+                new Lambda(() =>
+                {
+                    if (UpdatePhase(fsm, baseHp, phase2, 0.8f))
+                    {
+                        SetWaits(1.25f, 3f, 0.6f);
+                        SetSpeedMultiplier(1.1f);
+                    }
+                    else if (UpdatePhase(fsm, baseHp, phase3, 0.6f))
+                    {
+                        SetWaits(1f, 2.5f, 0.5f);
+                        SetSpeedMultiplier(1.15f);
+                    }
+                    else if (UpdatePhase(fsm, baseHp, phase4, 0.4f))
+                    {
+                        SetWaits(0.8f, 2.2f, 0.4f);
+                        SetSpeedMultiplier(1.2f);
+                    }
+                    else if (UpdatePhase(fsm, baseHp, phase5, 0.2f))
+                    {
+                        SetWaits(0.7f, 2f, 0.3f);
+                        SetSpeedMultiplier(1.25f);
+                    }
+                })
+            );
     }
 }
 
 internal class MarmuFeature : AbstractGhostWarriorFeature<MarmuModule>
 {
     public override string Name => "Marmu";
-    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) => lmb.DoMacroEdit(new("COMBAT[Marmu]", "ORIG + (UPSLASH | SIDESLASH) +  (SPICYCOMBATSKIPS | MASKSHARDS>15)"));
+
+    public override void ApplyLogicChanges(GenerationSettings gs, LogicManagerBuilder lmb) =>
+        lmb.DoMacroEdit(
+            new(
+                "COMBAT[Marmu]",
+                "ORIG + (UPSLASH | SIDESLASH) +  (SPICYCOMBATSKIPS | MASKSHARDS>15)"
+            )
+        );
 }
